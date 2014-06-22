@@ -4,9 +4,9 @@ use warnings;
 
 # Paths
 my $path="Perl/";
-my $logfile="Perl/build.log";
+my $logfile="Perl/_build_.log";
 my $versionfile="Perl/version.dat";
-my $execverfile="Perl/set_version.bat";
+my $execverfile="Perl/_version_.bat";
 
 # Parameters
 my $versionnumber=getVersion();

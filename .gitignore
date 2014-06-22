@@ -1,3 +1,10 @@
+## General files to ignore
+.*
+_*
+
+## PSPad project file
+*.ppr
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
