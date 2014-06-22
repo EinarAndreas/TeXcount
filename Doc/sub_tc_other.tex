@@ -1,0 +1,28 @@
+%% Other TC instructions
+
+\begin{description}
+
+\option[break \parm{title}]
+Break point which initiates a new subcount. The title is used to identify the following region in the summary output.
+
+\option[incbib \optiontext{or} includebibliography]
+Sets bibliography inclusion, same as running \TeXcount{} with the option \code{-incbib}.
+
+\option[subst \parm{macro} \parm{text}]
+This substitutes a macro with any text. The verbose output will show the substituted text: e.g. \code{\%TC:subst \bs{test} TEST} will cause a following \code{\bs{newcommand}\bs{test}\{TEST\}} to be changed into \code{\bs{newcommand} TEST\{TEST\}}, which \TeXcount{} will interpret differently. Use with care!
+
+\option[ignore]
+Indicates start of a region to be ignored. End region with \code{\%TC:endignore}.
+
+\option[insert \parm{\TeX-code}]
+Insert \TeX{} code for \TeXcount{} to process.
+
+\option[newcounter \parm{name} \opt{description}]
+Define a new counter with the given name and description (optional). A corresponding parsing rule will also be added with the same name.
+
+\option[newtemplate \optiontext{and} template \opt{template-line}]
+Specify a template for the summary output. The first line should just declare a new template using \code{\%TC:newtemplate}, while the subsequent lines use \code{\%TC:template} followed by text specifying the template. The line breaks in the template specification are not of importance: to specify a line break, use \code{\bs{n}}.
+
+\end{description}
+
+

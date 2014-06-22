@@ -1,0 +1,145 @@
+% Subsection: command line options
+
+\begin{description}
+\sloppy
+\def\option[#1]{\item[\quad\code{#1}]\hskip 0pt plus 10pt}
+\def\alt#1{[#1]}
+\def\alts#1{[[#1]]}
+
+\option[-v]Verbose (same as \code{-v3}).
+
+\option[-v0]No details (default).
+
+\option[-v1]Prints counted text, marks formulae.
+
+\option[-v2]Also prints ignored text.
+
+\option[-v3]Also includes comments and options.
+
+\option[-v4]Same as \code{-v3 -showstate}.
+
+\option[-v=\ldots, -v\alts{0-4}\ldots]Allows detailed control of which elements are included in the verbose output. The provided values is a list of styles or style categories separated by \code{+} or \code{-} to indicate if they should be added or removed from the list of included styles. Style categories start with capital letter and include \code{Words}, \code{Macros}, \code{Options}; the individual styles are in all lower case and include \code{word}, \code{hword}, \code{option}, \code{ignore}.
+
+\option[-showstate]Show internal states (with verbose).
+
+\option[-brief]Only prints a one line summary of the counts for each file.
+
+\option[-q, -quiet]Quiet mode, does not print error messages. Use is discouraged, but it may be useful when piping the output into another application.
+
+\option[-strict]Prints a warning of begin-end groups for which no specific rule is defined.
+
+\option[-total]Only give total sum, no per file sums.
+
+\option[-1]Same as specifying \code{-brief} and \code{-total}, and ensures there will only be one line of output. If used with \code{-sum}, the output will only be the total number.
+
+\option[-0]Same as \code{-1}, i.e. \code{-brief} and \code{-total}, but does not put a line shift at the end. This may be useful when the one line output is to be used by another application, e.g. Emacs, for which the line shift would otherwise need to be stripped away.
+
+\option[-template="\ldots"]Specify an output template which is used to generate the summary output for each file and for the total count. Codes \code{\{\textit{label}\}} is used to include values, where \code{\textit{label}} is one of \code{0} to \code{7} (for the counts), \code{SUM}, \code{ERROR} or \code{TITLE} (first character of label is sufficient). Conditional inclusion is done using \code{\{\textit{label}?\textit{text}?\textit{label}\}} or \code{\{\textit{label}?\textit{if non-zero}|\textit{if zero}?\textit{label}\}}. If the count contains at least two subcounts, use \code{\{SUB|\textit{template}|SUB\}} with a separate template for the subcounts, or \code{\{SUB?\textit{prefix}|\textit{template}|\textit{suffix}?SUB\}}.
+
+\option[-sub\alt{=\ldots}, -subcount\alt{=\ldots}]Generate subcounts. Valid option values are \code{none}, \code{part}, \code{chapter}, \code{section} and \code{subsection} (default), indicating at which level subcounts are generated. (On by default.)
+
+\option[-nosub]Do not generate subcounts.
+
+\option[-sum\alt{=n,n,\ldots}]Produces total sum, default being all words and formulae, but customisable to any weighted sum of the seven counts (list of weights for text words, header words, caption words, headers, floats, inlined formulae, displayed formulae).
+
+\option[-nosum]Do not generate total sum. (Default choice.)
+
+\option[-col]Use ANSI colour codes in verbose output. This requires ANSI colours which is used on Linux, but may not be available under Windows. On by default on non-Windows systems. 
+
+\option[-nc, -nocol]No colours (colours require ANSI). Default under Windows.
+
+\option[-nosep, -noseparator]No separating character/string added after each word in the verbose output (default).
+
+\option[-sep=, -separator=]Separating character or string to be added after each word in the verbose output.
+
+\option[-relaxed]Relaxes the rules for matching words and macro options.
+
+\option[-restricted]Restricts the rules for matching words and macro options.
+
+\option[-]Read \LaTeX{} code from STDIN.
+
+\option[-inc]Parse included files (as separate files).
+
+\option[-merge]Merge included files into document (in place).
+
+\option[-noinc]Do not parse or merge in included files (default).
+
+\option[-incbib]Include bibliography in count, include bbl file if needed.
+
+\option[-nobib]Do not include bibliography in count (default).
+
+\option[-incpackage=]Include rules for a given package.
+
+\option[-dir\alt{=\ldots}]Specify working directory which will serve as root for all include files. The default (\code{-dir=.}) is to use the current directory, i.e. from which \TeXcount{} is executed: the path can be absolute or relative to the current directory. Use \code{-dir} to use the path of the main \LaTeX{} document as working directory.
+
+\option[-auxdir\alt{=\ldots}]Specify the directory of the auxiliary files, e.g. the bibliography (\code{.bbl}) file. The default setting (\code{-auxdir} only) indicates that auxiliary files are in the working directory (from the \code{-dir} or \code{-dir=} option). If \code{-auxdir=} is used to provide a path and \code{-dir=} is used to specify the working directory, the path to the auxiliary directory is take to be relative to the current folder (from which \TeXcount{} is executed); if used with \code{-dir}, the working directory is taken from the path of the parsed file, and the auxiliary directory is taken to be relative to this (unless an absolute path is provided).
+
+\option[-enc=, -encoding=]Specify encoding to use in input (and text output).
+
+\option[-utf8, -unicode]Use UTF-8 (Unicode) encoding. Same as \code{-encoding=utf8}.
+
+\option[-alpha=, -alphabets=]List of Unicode character groups (or digit, alphabetic) permitted as letters. Names are separated by \code{,} or \code{+}. If list starts with \code{+}, the alphabets will be added to those already included. The default is Digit+alphabetic.
+
+\option[-logo=, -logograms=]List of Unicode character groups interpreted as whole word characters, e.g. Han for Chinese characters. Names are separated by \code{,} or \code{+}. If list starts with \code{+}, the alphabets will be added to those already included. By default, this is set to include Ideographic, Katakana, Hiragana, Thai and Lao.
+
+\option[-ch, -chinese, -zhongwen]Turn on Chinese mode in which Chinese characters are counted. I recommend using UTF-8, although \TeXcount{} will also test other encodings (GB2312, Big5, Hz) if UTF-8 fails, and other encodings may be specified by \code{-encoding=}.
+
+\option[-jp, -japanese]Turn on Japanese mode in which Japanese characters (Kanji and Kana) are counted. I recommend using UTF-8, although \TeXcount{} will also test other encodings (e.g. EUC-JP) if UTF-8 fails, and other encodings may be specified by \code{-encoding=}.
+
+\option[-kr, -korean]Turn on Korean mode in which Korean characters (Hangul and Han) are counted. I recommend using UTF-8, although \TeXcount{} will also test other encodings (e.g. EUC-KR) if UTF-8 fails, and other encodings may be specified by \code{-encoding=}.
+
+\option[-kr-words, -korean-words]Korean mode in which Hangul words are counted (i.e. as words separated by spaces) rather than characters. Han characters are still counted as characters. See also \code{-korean}.
+
+\option[-chinese-only, ..., -korean-words-only]As options \code{-chinese}, ..., \code{-korean-words}, but also excludes other alphabets (e.g. letter-based words) and logographic characters.
+
+\option[-char, -letter]Count letters instead of words. This count does not include spaces.
+
+\option[-out=]Send output to file. Takes file name as value.
+
+\option[-out-stderr]Send output to STDERR instead of STDOUT.
+
+\option[-html]Output in HTML format.
+
+\option[-htmlcore]Only HTML body contents.
+
+\option[-htmlfile=]File containing a template HTML document with \code{<!-- TeXcount -->} included somewhere to indicate the location where the TeXcount output from the parsing should be inserted.
+
+\option[-tex]Encode \TeX{} special characters for output into \TeX{} code.
+
+\option[-css=]Reference to CSS to be included in the HTML output instead of including the style definition directly in the output.
+
+\option[-cssfile=, -css=file:]File containing style definitions to be included into the HTML output instead of the default styles.
+
+\option[-freq\alt{=\#}]Count individual word frequencies. Optionally, give minimal frequency required to be included in output.
+
+\option[-stat]Produce statistics on language usage, i.e. based on the alphabets and logograms included.
+
+\option[-macrostat, -macrofreq]Produce statistics on package, environment and macro usage. 
+
+\option[-codes]Display an overview of the colour codes. Can be used as a separate option to only display the colour codes, or together with files to parse.
+
+\option[-nocodes]Do not display overview of colour codes.
+
+\option[-opt=, -optionfile=]Reads options (command line parameters) from a specified text file. Should use one option per line. May also include TC options in the same format as specified in \LaTeX{} documents, but prefixed by \code{\%} rather than \code{\%TC:}. Blank lines and lines starting with \code{\#} are ignored; lines starting with \code{\bs{}} are considered to be continuations of the previous line.
+
+\option[-split, -nosplit]The \code{-split} option, which is on by default, speeds up handling of large files by splitting the file into paragraphs. To turn it off, use the \code{-nosplit} option.
+
+\option[-showver, -nover]Include version number in output with \code{-showver}; use \code{-nover} not to show it (default). 
+
+\option[-h, -?, --help, /?]Help.
+
+\option[-h=, -?=, --help=, /?=]Help on particular macro or group name: gives the parsing rule for that macro or group if defined. If the the macro or environment is package specific, use \code{-h=\parm{package}:\parm{name}}; replace \code{\parm{package}} with \code{class\%\parm{name}} if it is specific to a document class.
+
+\option[-help-options, -h-opt]Lists all TeXcount options and help on them.
+
+\option[--help-option=, -h-opt=]Lists all TeXcount options containing the provided string: e.g. \code{-h-opt=inc} lists all options containing \code{inc}, while \code{-h-opt=-v} lists all options starting with \code{v}.
+
+\option[-help-style, -h-style]Lists all styles and style categories, i.e. those permitted used in -v={styles-list}.
+
+\option[-help-style=, -h-style=]Gives description of style or style category. 
+
+\option[-ver, --version]Print version number.
+
+\option[-lic, --license]License information.
+
+\end{description}

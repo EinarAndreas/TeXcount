@@ -1,0 +1,29 @@
+% Subsection: TC-commands for adding macro rules
+
+\begin{description}
+\sloppy
+
+\option[macro \parm{macroname} \parm{parameter-rules}]
+Defines macro handling rule for the specified macro. The parameter is on the form \code{[\textit{rule},\ldots]} where each rule is either a keyword indicating the parsing rule for a macro parameter or \code{option:\textit{rule}} for an optional \code{[]}-enclosed parameter. Alternatively, an integer value $n$ indicates that the $n$ first parameters to the macro should be ignored, equivalent to giving a list of $n$ \code{ignore} rules.
+
+\option[envir \parm{envirname} \parm{parameter-rules} \parm{content-rule}]
+(The previously used command, \code{group}, remains an alias for \code{envir}, but the name \code{envir} is more appropriate and therefore recommended.)
+This specifies the handling of environments with the given name. The parameter handling rule, applied to parameters following \code{\bs{begin}\{\textit{name}\}}, are specified as in the \code{macro} instruction. The second parameter specifies the rule, i.e. parser state, with which the contents should be parsed.
+
+\option[macrocount \parm{macroname} \opt{count-spec.}]
+(An alias for \code{macrocount} is \code{macroword}; the preferred name was changed to reflect that this can count any element, not just words.)
+If a number is provided as the count parameter, this defines the given macro to be counted as the specified number of words; if no count is specified, it is assumed to be 1. Alternatively, a \code{[]}-enclosed list of counters can be specified (using the counter keywords), causing each of them to be incremented: counter are \code{word}/\code{text}, \code{headerword}, \code{otherword}, \code{header}, \code{float}, \code{inlinemath}, \code{displaymath} plus a number of aliases.
+
+\option[breakmacro \parm{macroname}]
+Specify that the given macro should cause a break point.
+
+\option[floatinclude \parm{macroname} \parm{parameter-rules}]
+Specify macro handling rules used within float groups. The handling rules are specified as for \code{macro}. Most commonly, the parameter rule will be the \code{otherword}/\code{oword} to specify that words should be counted as \textit{other words}.
+
+\option[preambleinclude \parm{macroname} \parm{parameter-rules}]
+Specifies macro handling rules to be used in the preamble: the text between \code{\bs{documentclass}} and \code{\bs{begin}\{document\}}. The rule is specified like the \code{macro} rules.
+
+\option[fileinclude \parm{macroname} \parm{file-path-spec.}]
+Specifies macros that cause files to be included when \TeXcount{} is run with the \code{-inc} option. The parameters specify the format on which the file path is specified, and can also be used to modify the search path used within the included document.
+
+\end{description}

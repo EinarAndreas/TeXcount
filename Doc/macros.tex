@@ -1,0 +1,90 @@
+%% LaTeX macros
+\usepackage{times}
+%\usepackage{garamond}
+%\usepackage{fourier} % math & rm
+\usepackage[scaled=1.05]{helvet} % ss
+\usepackage{relsize}
+\usepackage[dvipsnames]{xcolor}
+
+% Define underscore to be a regular character in text mode
+\begingroup
+  \catcode`\_=\active
+  \gdef_#1{\ensuremath{\sb{#1}}}
+\endgroup
+\mathcode`\_=\string"8000
+\catcode`\_=12
+
+% Set version number
+\newcommand\version{$3.0$}
+
+\newcommand\copyrightfootnote{
+\footnotetext{Copyright (2008-2013) of Einar Andreas R{\o}dland, distributed
+under the \LaTeX{} Project Public License (LPPL).}
+}
+
+%TC:macroword \TeXcount 1
+\newcommand\TeXcount{{\TeX}count}
+
+% Text formats
+\newcommand\codestyle[1]{\textsf{\color{Blue}#1}}
+\newcommand\code[1]{{\smaller\codestyle{#1}}}
+\newcommand\bigcode[1]{\codestyle{#1}}
+\newcommand\codeline[1]{\begin{quote}\code{#1}\end{quote}}
+\newcommand\bs[1]{\textbackslash#1}
+\newcommand\URL[1]{\textsf{\small #1}}
+
+% Description items: options, parameters, optional parameters
+% These are also interpreted by dos2html.pl
+\def\option[#1]{\item[\code{#1}]\hskip 0pt plus 10pt}
+\def\parm#1{\textit{\color{OliveGreen}#1}}
+\def\opt#1{\parm{[#1]}}
+\def\alt#1{[#1]}
+\def\optiontext#1{\textrm{\bfseries\color{black}#1}}
+
+% Mark off notification in contents for good visibility
+\newcommand\ContentsNote[1]{\addtocontents{toc}{\string\marginpar{\textsf{\color{red}\tiny #1}}}}
+
+% Notabene: margin note
+%TC:macro NB 1
+\newcommand\NB[1]{\ContentsNote{NB}\marginpar{\textsf{\tiny#1}}}
+
+% Mark text as a notification
+%TC:macro NOTE [text]
+\newcommand\NOTE[1]{\textit{\color{red}#1}}
+
+% Mark text for update
+%TC:macro UPDATE [text]
+\newcommand\UPDATE[1]{\ContentsNote{UPDATE}\textit{\textbf{\color{red}This needs to be updated:} {\color{blue}#1}}}
+
+% Mark text as a notification
+%TC:macro TODO [text]
+\newcommand\TODO[1]{\ContentsNote{TODO}\textit{\textbf{\color{red}#1}}}
+
+% BUG
+%TC:macro BUG [text]
+\newcommand\BUG[1]{{\color{red}#1}}
+
+\makeatletter
+
+\renewcommand\@maketitle{%
+\newpage\null\vskip 2em%
+\begin{center}%
+\let\footnote\thanks
+{\LARGE \@title \par}%
+\end{center}%
+\par
+\vskip 1.5em
+}
+
+\renewcommand\abstractname{Abstract}
+\renewenvironment{abstract}{%
+  \begin{center}%
+    {\slshape\bfseries\large\abstractname\vspace{-.5em}\vspace{\z@}}%
+  \end{center}%
+  \vskip 4pt
+  \slshape
+}{
+\vskip 0.5em
+}
+
+\makeatother

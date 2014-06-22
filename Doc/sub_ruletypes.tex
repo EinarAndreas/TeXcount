@@ -1,0 +1,33 @@
+%%
+%
+\begin{description}
+\def\option#1[#2]#3{\item[#1:] (key: \code{#3} formerly \code{#2})}
+\option{Text}[1]{text, word, wd, w}
+ Count as text (i.e. count words).
+\option{Header text}[2]{headertext, headerword, hword, hwd, hw}
+ Count as header text.
+\option{Other text}[3]{otherword, other, oword, owd, ow}
+ Count as float/caption text.
+\option{Displaymath}[7]{displaymath, dsmath, dmath, ds}
+ Count as displayed math formulae.
+\option{Inline math}[6]{inlinemath, inline, imath, eq}
+ Count as inlined math formulae.
+\option{To header}[4]{header, heading, head}
+ Count header, then count text as \code{headertext} (transition state).
+\option{To float}[5]{float, table, figure}
+ Count float, then parse contents as \code{isfloat} (transition state).
+\option{Preamble}[-9]{}
+ Parse as preamble, i.e. ignore text but look for \code{preambleinclude} macros.
+\option{Ignore}[0]{ignore}
+ Ignore text, i.e. do not count, but will still parse the code.
+\option{Float}[-1]{isfloat}
+ Float contents, ignore text but look for \code{floatinclude} macros.
+\option{Strong exclude}[-2]{xx}
+ Strong ignore which ignore environments, e.g. to use in macro definitions where
+ \code{\bs{begin}}--\code{\bs{end}} need not be balanced.
+\option{Stronger exclude}[-3]{xxx}
+ Stronger ignore, handles macros as isolated tokens without handling their parameters,
+ to use with macro definitions like \code{\bs{newcommand}} and \code{\bs{def}}.
+\option{Exclude all}[-4]{xall}
+ Ignore all, including unbalanced braces (e.g. used by \code{\%TC:ignore} and the \code{verbatim} environment). This rule may be used for environment contents, but not for macro or environment parameters or options since the exclusion causes \{ and [ to be ignored.
+\end{description}

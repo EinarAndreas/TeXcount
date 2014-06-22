@@ -1,0 +1,619 @@
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage{a4wide}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{color}
+
+\include{macros}
+\newcommand\Obj[1]{\textsl{#1}}
+\newcommand\wild{\ldots}
+\newcommand\eqsim{$=\sim$}
+
+% CGI exclusion macro
+%\def\CGI#1\CGIend{} % To exclude CGI text
+\def\CGI#1\CGIend{#1} % To include CGI text
+\def\CGIend{}
+
+%%% Title
+\title{%
+\LARGE \TeXcount\\
+\Large Technical documentation\\
+\Large Version \version\copyrightfootnote
+}
+\author{Einar Andreas R{\o}dland}
+
+\sloppy
+
+\begin{document}
+
+\maketitle
+
+{\abstract%
+The aim of this document is to explain the implementation details of \TeXcount{} with the aim of aiding anyone who wishes to modify the Perl code (including the author). To be of practical use, it will require some knowledge of Perl and familiarity with \TeXcount{}: while full fledged development of \TeXcount{} requires a working knowledge of Perl, code modification may often be done with only limited experience with Perl.
+}
+
+{\scriptsize\tableofcontents}
+
+\pagebreak
+
+
+
+\section{Introduction}
+
+
+\subsection{\TeXcount{} versioning}
+
+The version number is on the form \code{\textit{major}.\textit{version}.\textit{subversion}.\textit{build}}. Main releases contain only the first to terms, implying that subversion and build number are both zero. Minor releases only contain the first three terms. Main as well as minor releases should be functional, tested versions. The subversion number can also be \code{alpha} ($\alpha=-2$) or \code{beta} ($\beta=-1$) for which the testing has been limited. The build number is used to keep track of changes and versions during development: they may be made available, but are purely for testing.
+
+
+\subsection{Some things you need to know about Perl}
+
+\TeXcount{} is written in Perl. The entire script, including macro rules and help texts, is contained in one file. This makes the file somewhat big, and modularisation of the code is therefore not strictly enforced. I have however tried to structure the code somewhat.
+
+Perl has a few build-in data structures which are referenced in somewhat different manners. In this document, it will be important to recognize the difference between three different types of data: regular variables, arrays and hash maps.
+
+\begin{description}
+
+\item[\code{\$\textit{name}=\textit{value}}:] The \code{\$} at the start indicates that it is a Perl variable. The value can be numbers or strings, or it can be a reference which points to another data object (e.g. array or hash map).
+
+\item[\code{@\textit{name}=(\textit{value},\ldots)}:] The \code{@} at the start indicates that this is an array. The positions are indexed from 0 to $\textrm{length}-1$.
+
+\item[\code{\%\textit{name}=(\textit{key}=>\textit{value},\ldots)}:] The \code{\%} at the start indicates that this is a hash map that maps keys to values. The key will usually be a string, but can also be a number.
+
+\item[\code{sub \textit{name}} \{\ldots\}:] This defines a subroutine: function or procedure. Normally, these can be defined anywhere in the script, and I have generally placed them after the main program.
+
+\end{description}
+
+Note that \code{(\textit{value},\ldots)} is a list of values, not an array or a hash: it simply produces a list of values that are used to fill the defined array or hash. Arrays and hashes can also be produced directly by \code{[\textit{value},\ldots]} or \code{\{\textit{key}=>\textit{value},\ldots\}} respectively. Both these return a reference to the array/hash rather than the array/hash itself.
+
+In much of the code, hashes are passed by reference: e.g. if \code{\%hash} is a hash, \code{\$href=\bs{\%hash}} stores a reference to the hash, where the leading \code{\bs{}} causes a reference to be returned rather than the hash itself. Retreiving a value from the hash is done by \code{\$hash\{\textit{key}\}} or \code{\$href->\{\textit{key}\}} if the hash is accessed by reference. Note that individual values in array and hashes are prefixed by \code{\$}: i.e. \code{\$\textit{array}[\textit{index}]} and \code{\$\textit{hash}\{\textit{key}\}}.
+
+\TeXcount{} makes extensive use of regular expressions (regex): expressions on the form \code{\$\textit{string}\eqsim/\textit{pattern}/} and \code{\$\textit{string}\eqsim s/\textit{pattern}/\textit{replace}/}. In \TeXcount{}, the main use is to recognize (and remove) tokens (words, macros, spaces, etc.) at the start of a string of \LaTeX{} code. Some of these may be fairly simple to understand, while others may be more complex.
+
+
+
+\section{Overview}
+
+
+\subsection{Code structure}
+
+\TeXcount{} is written in Perl, and although hardly the best structured and documented code ever seen, I have tried to structure and document it somewhat. In particular, some parts of the code have been written with modifications in mind so that users can make their own changes without in-depth knowledge of Perl or the \TeXcount{} script.
+
+Here's a quick walk-through of the code structure and comments on how easily the code may be modified. Some parts of the code are marked as \emph{CMD specific}. There are two version of the script: the CMD version intended for command line use, and the CGI version used with the web interface. The one you have is the CMD version.
+
+\begin{description}
+
+\item[\em HEADER AND IMPORTS:] \textit{The shebang (\code{\#!}) and \code{use} imports.}
+
+\item[\em INITIAL SETUP:] \textit{These set up global variables prior to execution.}
+
+\item[Settings and setup variables:] The start of the script sets of initial settings and variables. Many of these may be modified by command line options, but if you want to change the default behaviour these may be changed. However, note that there is a list \code{@StartupOptions} intended for this: initially, it is empty, but this is probably the simplest place the change startup options.
+
+\item[Internal states:] As of version 2.3, internal state identifiers (which are numerical codes) have been defined as \code{STATE}, \code{TOKEN} and \code{CNT} variables, and these are also defined here. A few subroutines for interpreting these states have been included here, although most subroutines are defined after the main code, since they are intimately tied to the state's numerical values. None of these are intended to be modified.
+
+\item[Styles:] The style definitions basically define which elements to print for each of the verbosity levels. These map element names to ANSI colour codes. When used with HTML, the element names are used as tag classes. If you wish to change the ANSI colour scheme, or change which elements are written in each verbosity option, these may be changed.
+
+\item[Word pattern definitions:] This section contains regular expression patterns for identifying words and macro options. In addition, the additional character classes defined by \TeXcount{} are defined here. If you have special needs or wishes, modifying these definitions may be an option.
+
+\item[\TeXcount{} parsing rules:] This is the section in which the main rules for interpreting the \LaTeX{} code is specified: the exception is a few hard-coded rules that do not follow these general patterns. These are hashes that map the macro or environment name to the macro handling rules. First, the default rules are defined, then packages specific rules are defined.
+
+\item[\em MAIN:] \textit{This is the top-level code which gets executed. All else is done through calls to subroutines.}
+
+\item[Main \TeXcount{} code:] This is the main code that is run. It is very simple: just a call to the method \code{MAIN} passing the command line options.
+
+\item[\em SUBROUTINES:] \textit{The subroutines are organised into blocks. Subroutines names use capital letters or initials if they are main routines (like public in other languages) to be used at the top-level, lower case if they may be used throughout but are considered to be lower-level subroutines, prefixed by one or two underscores (_) if used only within the block.}
+
+\item[Main routines:] The \code{MAIN} routine gives the general processing flow. This in turn calls routines to parse to command line options, process/apply the options, parse the \TeX/\LaTeX{} files, and finally summarise the final results. The main routines are CMD specific.
+
+\item[CMD specific subroutines:] These are subroutine versions that are CMD specific, e.g. file inclusion and ANSI colours. Their location is somewhat illogical: logically, they might belong later together with related subroutines, but have been placed this early because they are specific to the CMD (or CGI) version.
+
+\item[Option handling:] After parsing the options, the option values are processed using these subroutines. Some of the option handling operations call on global variables, whereas some are more hard-coded. Like the global variables, if you have special wishes or needs, there may be parts here that can be modified quite easily to change default settings or effects of specific options.
+
+\item[\TeX{} object:] The main role of the \code{TeX} object (which is technically not an object in the ordinary sense but just a hash) is to be a container object which links to the \TeX/\LaTeX{} code, the word count object, etc. The \code{TeX} object pertaining to any parsed \TeX/\LaTeX{} file is passed along from subroutine to subroutine, usually called \code{\$tex}. The \code{Main} object produced by \code{getMain} is a simple substitute for the \code{TeX} object for use when none is available, e.g. to catch errors not specific to any particular \code{TeX} object. 
+
+\item[File reading routines:] These are used to read files and STDIN.
+
+\item[Parsing routines:] These contain the main routines for parsing the \TeX/\LaTeX{} code. The main worker method is the \code{_{}parse_{}unit} which parses a block of code: the \emph{unit}. A unit of code may be the contents of an environment, a \code{\{\ldots\}} group, a macro option or parameter, etc. The parsing of one unit is determined by the parsing state, which is passed to the parsing method, and the end marker which indicates which token marks the end of the unit. Different subroutines are then used to process the different types of code: macros, environments, TC instructions, etc. Amongst these routines are also routines for converting the parsed code into tokens, which is done one token at the time which is then removed from the start of the code.
+
+\item[Count object and routines:] The count object contains the counters as an array, plus titles and labels; in addition it can contain a list of subcounts which are themselves count objects. The count object is used for each file, but also to summarise multiple files, and region counts within files (e.g. per section). The \code{TeX} object contains an active count object to which newly counted words, equations, etc. get added. However, each \code{TeX} object also has a summary count object which will contain the final sum. 
+
+\item[Output routines:] First, there are some routines for general output, i.e. independent of specific \code{TeX} objects. There are then some routines for formatting output, e.g. for the verbose output. There are also routines for printing count summaries in various formats. A special set of routines exist for printing the verbose output itself, and some of these are also involved in the parsing.
+
+\item[Help functions:] These routines are used to print help.
+
+\item[HTML functions:] These are routines for producing HTML output. In particular, the HTML style is defined here and may be easily modified.
+
+\item[Text data:] Some texts are not hard-coded into the script, but added as text data at the end. There are some routines defined to handle the text data, and then the text data itself.
+
+\end{description}
+
+Perl will first process the setup section which defines global variables, arrays and hashes. It then executes the main section (consisting of the call to \code{MAIN}), whereafter it exits. The subroutines and text data follow after the \code{exit}.
+
+\CGI
+There is a separate CGI version of the \TeXcount{} script for the web service. While this is mostly the same as the regular command line version, there are some differences in how options are set and \LaTeX{} documents are read. Occasional differences in the CGI version will be commented on, but the main emphasis will be on the command line version of \TeXcount{}.
+\CGIend
+
+
+\subsection{Global variables}
+
+A number of globally defined variables, including constants, arrays and hashes, are defined at the start of the program. These fall into a few different categories.
+
+There are a number of variables defined for storing options and settings, many of which can be modified by command line options. In addition, there are few variables for global summaries and statistics, as well as a few for internal states during parsing.
+
+Global constants are defined to represent different states and counters. One set of constants,\code{\$CNT_\wild}, specify the position of the different counters in the counting array; parser states are defined as \code{\$STATE_\wild}; token types are named \code{\$TOKEN_\wild}. For example, the parsing state \code{\$STATE_TEXT} indicates that a block of \LaTeX{} code should be parsed and have words counted as text words. The constants simply take numerical values, but help make the code more readable. Together with some of these are defined functions for interpreting or transforming these 
+
+Alternative settings for different options are defined in a number of hashes, e.g. \code{\%STYLES} indicating which tokens to print at different levels of verbosity, and \code{\%NamedLetterPattern} which stores alternative regex rules which may be used to recognize letters.
+
+A special set of global settings are the macro handling rules that are stored in a number of hashes: \code{\%TeXmacro}, \code{\%TeXenvir}, etc. as well as similar sets of hashes for package specific rules.
+
+
+\subsection{\TeXcount{} objects}
+
+First, note that what is referred to as objects here are just hash maps with a predefined set of values. However, these serve the same purposes as objects. There are no explicit class specifications defining these, just a set of functions returning hashes that contain the required keys, some of which may even be optional. Still, it is useful to think of them as objects, and their main purpose is to encapsulate data so that they can conveniently be passed around.
+
+\begin{description}
+
+\item[The \Obj{Main} object]
+Each \TeXcount{} session instantiates a singleton \Obj{Main} object. This is used as a replacement when no \Obj{TeXcode} object is available for capturing (counting and storing) error messages and warnings.
+
+\item[The \Obj{TeXcode} object]
+The \Obj{TeXcode} object encapsulates the \LaTeX{} code that is to be parsed as well as counts and lists of reported errors. In the code, it is generally referred to using the \code{\$tex} variable.
+
+\item[The \Obj{count} object]
+The \Obj{count} object is primarily a container for the array of counts: i.e. the array containing word counts and counts of headers, equations, etc. However, it also keeps track of subcounts from contained files, sections, etc.
+
+\end{description}
+
+A more detailed explanation of the different objects is provided in section \ref{sec:objects}
+
+
+\subsection{Main program flow}
+
+The main program consists of a single call to the procedure \code{MAIN}. This does the following:
+
+\begin{description}
+
+\item[\code{Initialise}:]
+Most of the initialisation is done when defining the global variables, but some initalisation required code execution: e.g. OS specific initialisation.
+
+\item[\code{Check_Arguments}:]
+Runs an initial check of the command line arguments passed to \TeXcount{}, e.g. for \code{-help}, and may exit \TeXcount{}.
+
+\item[\code{Parse_Arguments}:]
+Parses the command line arguments, setting option variables, and returns the list of \LaTeX{} files to be parsed.
+
+\item[\code{Apply_Options}:]
+This applies the options set either in the initial setup or initialisation, or when parsing the arguments. While most options are set directly during the argument parsing, settings that may depend on multiple options or options that should be applied only once, e.g. initialising the output and writing the HTML header, are applied here.
+
+\item[Parse files (or write help or error message):]
+The file parsing calls \code{Parse_file_list} with the list of files to be parsed, and this returns the total count object. Apart from this, help, summary output and error reports are produced if required.
+
+\item[\code{Close_Output}:] This just makes sure the output channel is properly closed, e.g. writing closing HTML code.
+
+\end{description}
+
+\CGI
+In the CGI version of \TeXcount{}, \code{Initialise}, \code{Check_Arguments} and \code{Parse_Arguments} are replaced by a single call to \code{Set_Options}. Also, since the CGI version only processes one file, alternatives for parsing and reporting on multiple files are not required and is instead replaced by a single call of \code{parse}.
+\CGIend
+
+
+\subsection{How \TeXcount{} processes \LaTeX{} documents}
+
+The \code{parse} routine is the entry point for parsing \LaTeX{} code of a single file. It takes a \Obj{TeXcode} object, the container object of a \LaTeX{} document and its corresponding \Obj{count} object, performs the parsing of the entire document. The counts are stored in the counter in the \Obj{TeXcode} object.
+
+The hierarchy of delegation from \code{MAIN} down to \code{parse} is as follows:
+
+\begin{description}
+
+\item[\code{MAIN}] calls \code{Parse_file_list} with a list of files which return the total count (a count object) for \code{MAIN} to report.
+
+\item[\code{Parse_file_list}] calls \code{parse_file} for each file in the provided file list, and for STDIN (identified by \code{\$_STDIN_}) if the option to parse standard input has been set. It then aggregates the counts returned by \code{parse_file} into a total count which it returns.
+
+\item[\code{parse_file}] calls \code{_add_file}, first for the main file, and then again for each included file if file inclusion (\code{-inc}) has been set. The aggregation of counts is done by \code{_add_file} into a total count object provided by \code{parse_file}, and this total count object is then returned by \code{parse_file} upon completing the parsing of the main file as well as all included files.
+
+\item[\code{_add_file}] reads the file into memory, creates a \Obj{TeXcode} object which encapsulates the \LaTeX{} code and the counts, and calls \code{parse} to perform the parsing of this \Obj{TeXcode} object. The counts are added directly into the \Obj{TeXcode} object, so only the \Obj{TeXcode} object reference is being passed around.
+
+\end{description}
+
+\CGI
+In the CGI version, \code{parse} is called directly from \code{MAIN} since only one document can be parsed and no file inclusion is possible. 
+\CGIend
+
+
+\subsection{\LaTeX{} code parsing by \code{parse}}
+
+The \code{parse} routine takes a \Obj{TeXcode} object and parses this to the end. It is, however, only the entry point for parsing the \LaTeX{} code: other routines do the main parsing with \code{_parse_unit} being the main work horse. In fact, \code{parse} only initiates the parsing, calling \code{_parse_unit} repeatedly until the end of the file.
+
+The \code{_parse_unit} routine is used to parse one unit or block of \LaTeX{} code: a unit/block can be the a part of the document enclosed in e.g. \{\ldots\} or \code{\bs{begin}\ldots\bs{end}}, or based on context enclosed by e.g. \code{[\ldots]}, or the document at the top level. It is passed the \Obj{TeXcode} object to parse, a parsing state instructing it how the block should be parsed, and optinally a block-end token which tells \code{_parse_unit} when the block ends. The \code{_parse_unit} routine is then called recursively whenever a unit/block is encountered that requires a separate parsing state or closing token.
+
+The parsing state indicates if the block is part of the main text in which words should be counted, a header, equation contents, should be excluded, etc. and is the only state variable of the parser. In addition to the regular states with which the \LaTeX{} code is parsed, there are transition states. E.g. \code{\$STATE_TO_HEADER} indicates that the block should be counted as a header and the contents should then be parsed using \code{\$STATE_TEXT_HEADER} as specified in \code{\%transition2state}.
+
+The document is tokenized, and \code{_parse_unit} retrieves one token at the time by calling \code{next_token}. Depending on the active parsing state and token, different rules (most with their own subroutines) are applied. These rules add to the \Obj{count} object of the \Obj{TeXcode} object by calling \code{_inc_count} and set the presentation style of the verbose output included which tokens to print. The active token and its style is by default stored in the \Obj{TeXcode} object and printed to the verbose output by \code{next_token} upon retrieving the next token, although this is occasionally overrun by calls to e.g. \code{flush_next}.
+
+When \code{_parse_unit} encounters a new block/unit, it will determine the state with which this unit should be parsed based the present state and the context that defines the unit.
+
+
+\subsection{Summary statistics}
+
+The counts are stored in the \Obj{TeXcode} object: subroutines performing the actual parsing increments the appropriate counter upon processing the parsed tokens. The \Obj{TeXcode} object contains a main \Obj{count} object from which summary output is generated. The \Obj{count} object can also contain a list of subcounts, themselves \Obj{count} objects, which may also be presented in the summary.
+
+Depending on options set and the number of files parsed, summary output can range from a single number of the total word count, to an extensive summary for each spcified file with separate summaries for each included file, as well as a total summary.
+
+
+
+\section{Global constants and variables}
+
+There are a number of global variables defined at the start of the script for storing options and settings as well as global counters.
+
+In addition, there are sets of global constants, as well as other globally defined variables, hashes and arrays. Here, we outline the main groups.
+
+
+\subsection{Global constants}
+
+There are a few sets of global constants. The use of global constants makes the code more readable. The sets of global constants are:
+
+\begin{description}
+
+\item[\code{\$STATE_\wild}:] Parsing states, e.g. \code{\$STATE_TEXT} for parsing \LaTeX{} code as regular text and \code{\$STATE_IGNORE} for regious that should not be counted.
+
+\item[\code{\$CNT_\wild}:] Index pointing to the location in the counter array used for a specific count, e.g. \code{\$CNT_WORDS_TEXT=1} indicating that words in text are counted in position 1 of the array.
+
+\item[\code{\$TOKEN_\wild}:] Token types, e.g. \code{\$TOKEN_WORD} and \code{\$TOKEN_MACRO}. When a token is parsed, the \Obj{TeXcode} object stores the token type as well as the token, which can then be used to determine how the token should be interpreted.
+
+\end{description}
+
+\subsubsection{Counter indices: \code{\$CNT_\wild}}
+
+The \Obj{count} object contains an array with the following counts: number of files, number of words in text, number of words in headers, number of words in captions, number of headers, number of floating objects/tables/figures, number of inline equations, number of displayed equations. Storing these are the main purpose of the \Obj{count} object.
+
+Each count has a fixed position in the array, and the \code{\$CNT_\wild} constants provide the positions of each count: e.g. \code{\$CNT_WORDS_TEXT=1} indicates that the counter for words in the text is stored in position 1 of the array. Originally, these positions were hard-coded and directly related to the parsing states, but by using these constants, and keeping the counter indices distinct from the parsing states, the code becomes both more readable and more flexible in case of future changes.
+
+\subsubsection{Parsing states: \code{\$STATE_\wild}}
+
+The parsing states fall into two categories.
+
+First there are parsing states used during the parsing of a unit/block: e.g. \code{\$STATE_TEXT}, \code{\$STATE_MATH}, \code{\$STATE_IGNORE}, ldots. In some of the states, words are counted either as text words, header words or captions words; in other states, words are ignored and the state primarily influences how the parsed \LaTeX{} code is styled in the verbose output.
+
+Secondly, there are transitional states: e.g. \code{\$STATE_TO_HEADER} which indicates the start of a header which should first cause the header count to be incremented and then the contained text to be parsed as header text using the parsing state \code{\$STATE_TEXT_HEADER}. The handling of the transitional states are encoded in \code{\%transition2state} and performed by the \code{transition_to_content_state} routine which is called by \code{_parse_unit}.
+
+Macro handling rules specify how many parameters the macro takes and which parsing states are used to parse each parameter; for environments, it additionally specifies a parsing state for the contents of the environment.
+
+Originally, before implementing the \code{\$STATE_\wild} constants, fixed numerical values were hard coded into the Perl code, and these numerical codes were required for adding new rules. For the macro rules specified within the Perl code of \TeXcount{}, the original numerical codes remain in the initial rule specification. However, from version 2.3 of \TeXcount{}, the intention is that users should no longer use these numerical codes to specify new macro handling rules, but instead use a set of keywords: e.g. \code{text}, \code{header}, \code{ignore}, etc. For this purpose, a hash \code{\%key2state} is defined which maps keywords to parsing states. The original numerical codes are included in this map in part for backward compatibility, but also because this key-to-state map is applied to the macro handling rule hashes \code{\%TeXmacro}, \code{\%TeXenvir}, etc. The \code{\%key2state} has is set up e.g. with
+\codeline{add_keys_to_hash(\bs{\%key2state},\$STATE_TEXT,1,'word','w','wd');}
+which maps the keys \code{1}, \code{'word'}, \code{'w'} and \code{'wd'} all to the value \code{\$STATE_TEXT} (which need not be 1!). However, this specification, which is used to convert keywords to states during initialisation of the macro handling rules and later if adding new rules, ensures that the original numberical codes will be handled as before: \TeXcount{} will be backward compatibile with respect to using the numberical codes to add new macro handling rules through \code{\%TC} commands. 
+
+Although in theory the parsing state numerical codes could be changed without any effect to the code, there are still a few places where the actual numerical values are used: e.g. the routine \code{state_to_text}.
+
+\subsubsection{Token types: \code{\$TOKEN_\wild}}
+
+When the \LaTeX{} code is tokenized, i.e. the string containing the \LaTeX{} code is converted to tokens like words or macros, not only is the token stored in the \Obj{TeXcode} object, but a token type is stored as well indicating if the object is a word, macro, space, symbol, bracket, etc. To make the Perl code more readable, these token type, although just integer values, are represented by constants \code{\$TOKEN_\wild}.
+
+When \code{_parse_unit} parses the \LaTeX{} code, it frequently uses the token type stored in the \Obj{TeXcode} object rather than the token itself to determine how to interpret the parsed tokens.
+
+
+\subsection{Option alternatives}
+
+Some options result in choosing between a number of alternatives for parsing, counting or presentation. These alternatives tend to be defined in arrays or hashes. When an alternative is selected, the corresponding value(s) are copied to a variable, array or hash which may then later be applied or further processed.
+
+\begin{description}
+
+\item[\code{\%BreakPointOptions}:] For keywords like \code{section} or \code{chapter}, this defines which macros indicate a new break point (i.e. initiates a new subcount).
+
+\item[\code{\%STYLES}, \code{\%STYLE}:] The \code{\%STYLES} hash contains different sets of style definitions, used to define the style with which tokens are printed, and are used to set the \code{\%STYLE} hash by \code{Apply_Options} after the options have been processed. Each value of the \code{\%STYLES} is a hash mapping style name to ANSI colour styles. For a given style, only style names defined in the style are printed in the verbose output. If ANSI colour coded output is used, these are the colour codes; otherwise, the ANSI colour styles are not themselves used, but the style name must still be included in the hash to enable the token to be printed.
+
+\item[\code{\%NamedLetterPattern}, \code{\$LetterPattern}:] Named regex patterns are defined in \code{\%NamedLetterPattern} where the selected pattern is stored in \code{\$LetterPattern}. This regex pattern defines what is recognized as letters when parsing \LaTeX{} code.
+
+\item[\code{\%NamedWordPattern}, \code{@WordPatterns}, \code{\$WordPattern}:] Named word patterns are defined in \code{\%NamedWordPattern}. The selected patterns are stored in the array \code{@WordPatterns}. Letters are indicated by a special character, and when the options are applied replaced by \code{\$LetterPattern} and merged into a single regex stored in \code{\$WordPattern}.
+
+\item[\code{\%NamedMacroOptionPattern}, \code{\$MacroOptionPattern}:] Named regex patterns are stored in \code{\%NamedMacroOptionPattern}, and the selected pattern copied to \code{\$MacroOptionPattern}. This pattern is used to recognize macro options which should be excluded from word counts.
+
+\item[\code{\%NamedEncodingGuessOrder}:] For each named language, this gives an array of encodings to try if none is given.
+
+\end{description}
+
+
+
+\section{Details of the \TeXcount{} objects}\label{sec:objects}
+
+These objects are simply hashes that are created with a given set of keys. Some keys may, however, be optional.
+
+
+\subsection{The \Obj{Main} object}
+
+The \Obj{Main} object is used instead of the \Obj{TeXcode} object to capture errors and warnings. It is created by the \code{getMain} routine. The values (keys) it contains are:
+
+\begin{description}
+
+\item[\code{errorcount}:] Numerical value, initialised to 0, used to count the number of errors reported.
+
+\item[\code{errorbuffer}:] Array, initialised to an empty array, used to buffer error messages reported before output is available: e.g. before the header or HTML header has been printed.
+
+\item[\code{warnings}:] Hash, initially empty, used to store warnings.
+
+\end{description}
+
+When errors are reported through calls to \code{error}, they will be stored in the \code{errorbuffer} if this exists, otherwise printed immediately. This is used to store errors reported before e.g. the HTML header has been written. After the appropriate headers have been written and the output channel is ready for writing, a call to \code{flush_errorbuffer} is made which prints all the errors in the errorbuffer and then deletes it so further errors will be printed immediately rather than buffered.
+
+
+\subsection{The \Obj{TeXcode} object}
+
+The \Obj{TeXcode} object is used to encapsulate the \LaTeX{} code and corresponding counts. It is created by the \code{TeXcode} routine. The values it contains are:
+
+\begin{description}
+
+\item[\code{filename}, \code{filepath}:] The name and path of the parsed \LaTeX{} file.
+
+\item[\code{PATH}:] An array containing the paths to search for included documents. At creation, this is empty, but calls to \code{_add_file} will set it; the top level files, initiated from \code{parse_file}, will have this set to \code{\$workdir}.
+
+\item[\code{texcode}:] Initialised with the \LaTeX{} document as a single string. If included files are to be inserted into the document, they will be inserted into the \code{texcode} string.
+
+\item[\code{texlength}:] Counts the total length (in characters) of \LaTeX{} code. Initialised with the length of the \LaTeX{} document. If included documents are inserted, their length is added to \code{texlength}.
+
+\item[\code{line}:] Initialised to an empty string. During parsing, segment by segment (one paragraph at a time) is moved from \code{texcode} to \code{line}. Tokens are then read and subsequently removed from \code{line}.
+
+\item[\code{next}:] Initialised to \code{undef}, this stored the next token to be processed. Upon tokenization, the token is identified and removed from the start of \code{line} and moved to \code{next}.
+
+\item[\code{type}:] Initialised to \code{undef}, this contains the token type (\code{\$TOKEN_\wild}) of the \code{next} token.
+
+\item[\code{style}:] Initialised to \code{undef}, this is used to set the style with which the \code{next} token should be presented in the verbose output.
+
+\item[\code{printstate}:] Initialised to \code{undef}, this is used output the active parsing state for use with verbose output (if \code{\$showstates} is set).
+
+\item[\code{eof}:] Initialised to 0, this is set to 1 once the end of the document is reached.
+
+\item[\code{countsum}:] The contains the main \Obj{count} object.
+
+\item[\code{subcount}:] This contains the present subcount which is also a \Obj{count} object. These subcount are used to count e.g. section and chapters of the document.
+
+\item[\code{errorcount}:] Initialised to 0, used to count the number of errors reported during the parsing.
+
+\item[\code{errorbuffer}:] Undefined at initiation, indicating that errors should be printed instantly rather than stored for later printing. Can be defined as an array which is then used to store error messages so they can be printed later. 
+
+\item[\code{warnings}:] Hash used to store warnings.
+
+\end{description}
+
+When the \Obj{TeXcode} object is initialised, the \LaTeX{} document is placed as a single big string in \code{texcode}. During parsing, \code{next_token} is called on to return the next token, which in turn it delegates to \code{_get_next_token}. Instead of operating on the whole document, which was done in older version of \TeXcount{} and was quite slow on large document, \code{more_texcode} is called on to move segments (i.e. paragraphs) of \LaTeX{} code from \code{texcode} to \code{line}, and then it grabs one token at a time from \code{line}. This is when \code{next} and \code{type} are set.
+
+When the tokens are interpreted and counted, \code{inc_count} is called which increments the appopriate counter in \code{subcount}. If a new subcount is initiated, a call to \code{next_subcount} adds \code{subcount} to \code{sumcount}, including appending the \code{subcount} object to the list of subcounts stored with \code{sumcount}, and then replaces \code{subcount} with a new \Obj{count} object. 
+
+
+\subsection{The \Obj{count} object}
+
+The \Obj{count} object is used to store the word and text element counters. It is created by \code{new_count}. The values it contains are:
+
+\begin{description}
+
+\item[\code{title}:] A string set upon creating to contain a descriptive title of the count.
+
+\item[\code{counts}:] An array, initialized with 0s, which is used to store the counts. The size of the array is determined by \code{\$SIZE_CNT} and should reflect the number of \code{\$CNT_\wild} indices defined.
+
+\item[\code{subcounts}:] This is an array, initialised to an empty array, used to store the subcounts.
+
+\end{description}
+
+In addition to the default fields, when used as the \code{sumcount} field of a \Obj{TeXcode} object, a few additional fields are added:
+
+\begin{description}
+
+\item[\code{TeXcode}:] This is a reference pointing back to the \Obj{TeXcode} object in which it is contained.
+
+\end{description}
+
+
+
+\section{\LaTeX{} code parsing and interpreting}
+
+The entry point for parsing a \LaTeX{} document is the \code{parse} routine. This simply calls \code{_parse_unit} repeatedly using parsing state \code{\$STATE_TEXT} until the end of the document is reached. Thus, \code{_parse_unit} is the main routine for performing the actual parsing.
+
+The \code{_parse_unit} routine is called with a \Obj{TeXcode} object, a parsing state, and optionally an unit-ending token as arguments. It then calls \code{next_token} on the \Obj{TeXcode} object until the unit-ending token is reached: if the file ends before this is found, an error is reported. If no unit-ending token is provided, only one unit will be parsed. If the unit-ending token is set to \code{\$_PARAM_}, indicating that the unit to be parsed is a macro parameter, the \code{\$simple_token} flag is set and passed to \code{next_token} to avoid combining letters into words, and only one token is parsed before returning.
+
+For each token, depending on the token, token type, and active parsing state, \code{_parse_unit} decides how the token should be interpreted. In some cases, the interpretation is done within \code{_parse_unit}, but in many cases the interpretation is delegated to subroutines like \code{_parse_macro}, \code{_parse_math}, etc. If new groups (\code{\{\ldots\}} or \code{\bs{begin}\ldots\bs{end}}) are encountered, this causes \code{_parse_unit} to be cause recursively with an unit-ending token passed to \code{_parse_unit} to identify the group end.
+  
+Note that by default, even blocks that are to be ignored are parsed and required balanced units. Different exclude states exist to deal with cases in which the unit should not be completely parsed.
+
+Upon interpreting the parsed tokens, \code{_parse_unit} or the subroutines to which it delegates the interpretation control the counter incrementation as well as how the tokens are presented in the verbose output. The counter incrementation is done through calls to \code{inc_count} passing as arguments the \Obj{TeXcode} object, the appropriate count reference (\code{\$CNT_\wild}), and optionally a number if the counter should be increased by a number different from 1. Specifying how the token should be presented in the verbose output is done by deciding on the style, usually set using \code{set_style}: the styles are represented by strings that give the style name, which are the same as used as keys in \code{\%STYLE} and as styles in the HTML output.
+
+If a style for presenting a token is selected which is not in the \code{\%STYLE} hash, the token is not printed. Thus, the \code{\%STYLE} hash also filters which tokens are printed to the verbose output.
+
+
+\subsection{Tokenization and token handling}
+
+The routine for retrieving the next token is \code{next_token}. This first makes sure that the previous token gets printed to the verbose output with the style specified by \code{set_style}. It then calls \code{_get_next_token} to retrive the next token: this will process comments and line breaks itself until a token is retrieved that it returns.
+
+The \code{_get_next_token} routine checks the \code{line} field of the \Obj{TeXcode} object to determine which is the next token in \code{line}. If the \code{line} field is empty, it calls \code{more_texcode} to move the next segment of \LaTeX{} code from the \code{texcode} field of the \Obj{TeXcode} object to \code{line}. When it has decided on the approriate kind of token, removing it from the start of the \code{line} field in the process, it sets the \code{next} and \code{type} fields of the \Obj{TeXcode} object through calls to \code{__set_token} or \code{__get_token} (for single character tokens).
+
+If the optional \code{\$simple_token} flag is set, only simple tokens will be returned: i.e. letters will not be combined into words. This is used for parsing macro parameters.
+
+
+\subsection{Processing parameters and options}
+
+In \code{_parse_unit}, based on the parsing state and parsed token, it is decided how to interpret and process the token. In some cases, this processing is restricted to the parsed token itself: counting or ignoring it as well as deciding on the style with which it should be presented in the verbose output.
+
+In some cases, the token influences the parsing of subsequent text: e.g. macros can take parameters and options. Special subroutines exist to handle parsing of macro parameters, gobble up spaces or macro parameters, or handle ignored regions.
+
+
+\subsection{Verbose output}
+
+By default, all parsed code is processed for printing to the verbose output. If it actually gets printed or not depends on whether the set style is included in the \code{\%STYLE} hash or not. 
+
+Upon parsing a token, it is stored in the \code{next} field of the \Obj{TeXcode} object. If \code{set_style} is called during processing, this will set the \code{style} field of the \Obj{TeXcode} object, but will not itself print the token. The \code{flush_next} routine is used to print the \code{next} token using the style set in the \code{style} field, or provided in the call; this in turn calls \code{print_style} which is responsible for the printing. There is an automatic call to \code{flush_next} when the next token is retrieved, ensuring that all tokens are sent off for printing. When \code{flush_next} is called, the \code{style} field is set to \code{\$STYLE_BLOCK='-'} which blocks further printing (or change in style) of the token; the \code{style} field is then set to \code{undef} by \code{next_token} upon reading the next token.
+
+The tokens are passed to \code{print_style}, either directly from the parsing or via \code{next_token}, which looks up the style in the \code{\%STYLE} hash. Only tokens whose style is defined in the \code{\%STYLE} hash get printed. If colour coded output to text is set, the values \code{\%STYLE} are used with the \code{ansiprint} function to print the token using ANSI colour codes. If output to HTML is chosen, the token will be printed enclosed in a \code{<span>} tag using the style as class; the HTML style definitions are then used to determine how these elements will be displayed.
+
+Special style values are \code{\$STYLE_EMPTY=' '} which is used for spaces and must be defined in the \code{\%STYLE} for spaces to be printed, and the \code{\$STYLE_BLOCK='-'} style value which is not actually a style but a value used to mark that the token has already been printed and block further printing of it.
+
+In addition to the \code{\%STYLE} hash which specifies which tokens get printed, there is a global variable \code{\$printlevel} the value of which is taken from the \code{\%STYLE} which is used to control if verbose output is on ($1$ or $2$) or off ($0$ or $-1$). The $-1$ values indicates the quiet mode in which errors should not be printed; the value $1$, as opposed to $2$, indicates that multiple ignored lines should be collapsed to make the verbose output more compact, although this is only partially done.
+
+The routines for handling tokens, styles and verbose printing remain from the earliest version of \TeXcount{} and has not undergone much improvements or cleaning up and remains somewhat unstructured. Hence, there may be stray calls to e.g. \code{set_style} that no longer have any effect.
+
+
+
+\section{Regex patters: letters, words, macro options}
+
+One of the most important regex definitions in \TeXcount{} is that used to recognize words. This is done in two steps: first a regex for letters is produced, and then this is combined with patterns for words to generate one big pattern.
+
+Another regex defined is the one used to recognize macro options, i.e. \code{[\ldots]}, that appear together with macros and which should be ignored.
+
+One reason behind the desire to generate one big pattern rather than loop through alternative patterns is to enable Perl to compile each pattern just once. The pattern compilation typically takes longer than the pattern matching, so this can make a big difference.
+
+
+\subsection{The word regex}
+
+First note that \TeXcount{} distinguishes between alphabetic words, i.e. words composed of letters, and logograms (e.g. Chinese characters) which are counted per character. When words (or letters) are counted, these are made from characters defined as alphabetic; characters defined as logographic are counted separately character by character.
+
+The regex pattern recognizing a letter is placed in \code{\$LetterPattern}. This is usually taken from one of the optional patterns in \code{\%NamedLetterPattern}, but can be modified elsewhere or replaced by \code{undef} to signify that no words or letters should be counted.
+
+A number of regex patterns which should be recognized as words are place in the array \code{\@WordPatterns}. This is usually set by using one of the named lists of word patterns defined in \code{\%NamedWordPattern}, but can be redefine or modified by options. In the word patterns, the character \code{\@} is used to represent a letter, and this is later replaced by \code{\$LetterPattern} when the options are applied.
+
+After parsing the command line arguments, the options and settings are applied. At this point, through \code{apply_language_options}, \code{\$LetterPattern} is applied to \code{\@WordPatterns}, which are then combined into a single regex: \code{\$WordPattern}. At this point, patterns for recognizing logograms are also added.
+
+
+\subsection{The macro option regex}
+
+After macros and macro parameters, macro options on the form \code{[\ldots]} will be ignored. There is a single regex used to recognize and remove these macro options.
+
+For most uses, macro options tend to be short codes which are easily recognized. However, there are also cases where the macro options can be more complex. On the other hand, there are also cases where brackets are used without being macro options, and it is vital that these cases should not be mistaken for macro options: in particular if they contain text that should be counted.
+
+In order to capture most macro options as options without running a risk of ignoring actual text enclosed in brackets, restrictions are placed on what can go inside macro options. The default rule is moderately strict, but can be relaxed to allow more extensive and general macro options.
+
+The different macro option regex patterns are named in \code{\%NamedMacroOptionPattern} and copied to \code{\$MacroOptionPattern} when initialised or changed by options.
+
+
+\subsection{Unicode character classes}
+
+The user can specify which character classes should be considered alphabetic (i.e. letters) and which should be considered logographic (i.e. counted as indicidual characters). Typical alphabetic characters are the Latin letters. Typical logograms are the Chinese characters. If any of the language options are used, these character classes will automatically be set.
+
+Specifications of alphabets and logograms are done by options \code{-alpha=} and \code{-logo=} using Unicode character classes. Unicode classes include Latin, Digit, Ideographic, Han, etc. Note that all Unicode character classes start with capital letters. 
+
+
+\subsection{Custom made character classes}
+
+Some of the Unicode character classes are not defined quite as desired by \TeXcount{}. In particular, the \code{Alphabetic} character class includes \code{Ideographic}, which would cause e.g. Chinese characters to be allowed as parts of words together with Latin characters rather than force them to be counted as individual characters. To resolve this problem, new character classes are defined in \TeXcount{} that fit our need.
+
+New character classes can be defined within \TeXcount{} through subroutines named \code{Is_\textit{name}}. Most notable is the \code{Is_alphabetic} character class from which the logographic characters have been excluded. This is now used as the default alphabetic character class.
+
+Presently defined characters classe are named \code{digit}, \code{alphabetic}, \code{alphanumeric}, \code{punctuation}, \code{cjk}, \code{cjkpunctuation}. Note that these are all lower case, and have the prefix \code{Is_} added when referred to in the code.
+
+When adding character classes to the set of alphabetic or logographic characters using \code{-alpha=} or \code{-logo=}, the names without the prefix \code{Is_} may be used: for character classes starting with a lower case letter, the prefix is added automatically.
+
+Note that the subroutines specifying the character classes must be defined prior in the code to any use: this is unlike other subroutines which may be defined anywhere in the code. Also, to be permitted as character classes by Perl, the subroutines must start with \code{Is_} (or \code{In_} although that is not used by \TeXcount{}), although different versions of Perl need not enforce this.
+
+
+
+\section{Macro handling rules}
+
+While some rules for handling macros are hard-coded into \TeXcount{}, most of the rules are stored in a number of hashes which \TeXcount{} look up whenever a macro is encountered. The general rule is that the keys are either macros (e.g. \code{'\bs{section}'}) or environment names (e.g. \code{'quote'}).
+
+\begin{description}
+
+\item[\code{\%TeXmacro}:] The keys are macros, or \code{'begin\textit{name}'} where name is an environment name, and the values specify how many parameters the macro (or environmemt) takes and how these should be processed. See the section on parameter handling rules further down.
+
+\item[\code{\%TeXenvir}:] The keys are environment names, and values are the parsing state with which the contents of the environment should be parsed.
+
+\item[\code{\%TeXpreamble}:] These are macro handling rules to be applied in the preamble, i.e. after \code{\bs{documentclass}} but before \code{\bs{begin}\{document\}}. The rules are specified as for \code{\%TeXmacro}.
+
+\item[\code{\%TeXfloatinc}:] These are macro handling rules to be applied within floating bodies, i.e. tables and figures.
+
+\item[\code{\%TeXmacroword}:] The keys are macros, and the values are numbers representing how many words the macro generates. This is used for macros like \code{\%LaTeX} which generates text.
+
+\item[\code{\%TeXpackageinc}:] The keys are macros used to include packages. Although included in \code{\%TeXmacro}, the processing of package inclusion is actually performed by \code{_parse_include_package} independent of the hash value. The value should therefore be \code{1} or \code{[\$STATE_IGNORE]} since this is how it will be processed by \code{_parse_include_package}.
+
+\item[\code{\%TeXfileinclude}:] The keys are macros used to include \LaTeX{} files into the document, the value a keyword or list of keywords telling how file names and paths should be interpreted. Processing of these macros is done by \code{_parse_include_file}.
+
+\end{description}
+
+Note that the definition of \code{\%TeXmacro} starts by including \code{\%TeXpreamble}, \code{\%TeXfloatinc} and \code{\%TeXpackageinc}. After that, the values of \code{\%TeXpackageinc} are never used. For \code{\%TeXpreamble} and \code{\%TeXfloatinc}, however, it is in principle possible to rules within the preamble and floats, respectively, that are different from those defined in \code{\%TeXmacro} and applied elsewhere in the document.
+
+
+\subsection{Parameter handling rules}
+
+A macro can be specified to take a given number of parameters: this will typically be \code{\{\ldots\}} blocks following the macro. For each of these parameters, a separate parsing state can be specified. This is represented by an array with one element for each parameter, the elements being the parsing state (\code{\$STATE_\wild}) with which that parameter should be parsed.
+
+In addition to the \code{\$STATE_\wild} rules are some modifier/option states, \code{\$_STATE_\wild}. The \code{\$STATE_OPTION} states indicates that the next rule in the list is an optional parameter enclosed in \code{[]}. By default \code{[]} options are ignored, which can be swithed off by \code{\$STATE_NOOPTION} or on by \code{\$STATE_AUTOOPTION}.
+
+An alternative specification of a parameter handling rule is to give the number of parameters to ignore. \TeXcount{} will check if the specified rule is an array (as described above) or a number and interpret the rule accordingly.
+
+The hashes \code{\%TeXmacro}, \code{\%TeXpreamble} and \code{\%TeXfloatinc} all take values that are this kind of parameter handling rules, as are q\code{\%TeXpackageinc} since they are included in \code{\%TeXmacro}.
+
+Throughout the script, parsing states are referred to using the \code{\$STATE_\wild} constants. In previous versions, however, these codes were hard-coded into the script and used both to set up the hashes and to specify new rules through \%TC instructions. For backward compatibility, the old numerical state codes remain in the conversions from keywords to \code{\$STATE_\wild} constants as stored in \code{\%key2state} and applied through calls to \code{convert_hash} accompanied by \code{keyarray_to_state} or \code{key_to_state}.
+
+
+\subsection{File inclusion and the \code{\%TeXfileinclude} hash}
+
+The main \LaTeX{} commands for file inclusion are \code{\bs{input}} and \code{\bs{include}}, while \code{\bs{bibliography}} includes the \code{.bbl} bibliography file. However, additional packages exist that can also modify the file search path, of which \TeXcount{} has support for the \code{import} package.
+
+File inclusion macro rule are stored in the \code{\%TeXfileinclude} hash. The values are strings which contain one or more keywords (separated by space or comma):
+%
+\begin{description}
+
+\item[\code{input}:] This is a special keyword to use with \code{\bs{input}}. The handling of the parameter values is as \code{file}, but the parameter itself is not required to be enclosed in \code{\{\}}.
+
+\item[\code{file}:] This parameter simply gives the name of or path to a file. If the file is not found, \TeXcount{} will append \code{.tex} and try again.
+
+\item[\code{texfile}:] This parameter gives the name of or path to a file, but \code{.tex} will be appended, and is the rule used by \code{\bs{include}}.
+
+\item[\code{dir}:] This parameter provides the path of a directory relative to the \code{\$workdir}, and adds this to the search path before including any files. This is used with the \code{\bs{import}} macro of the \code{import} package.
+
+\item[\code{subdir}:] This parameter provides the path of a directory relative to the current directory, and adds this to the search path before including any files. This is used with the \code{\bs{subimport}} macro of the \code{import} package.
+
+\item[\code{<bbl>}:] This is a special keyword to use with \code{\bs{bibliography}} to specify inclusion of the bibliography file.
+
+\end{description}
+
+The parsing of the macros and parameters is done by \code{_parse_include_file}. For each keyword it parses a parameter, unless the parameter is on the form \code{<\textit{keyword}>}. The parsing of the \code{input} parameter is handled differently from the rest since it need not be enclosed by \code{\{\}}. It then delegates the processing of macro inclusion rules to \code{include_file}.
+
+In \code{include_file}, the file is located (based on search path) and either appends the file to the \code{@filelist} array of files to be include, or merged immediately into the document by a calls to \code{read_binary} and \code{prepend_code}.
+
+The \code{@filelist} array contains elements which are themselves arrays on the form \code{[file,path,\ldots]} where the first element is the path to the file to be included, and the remaining elements are the search paths used to set the \code{PATH} values of the \Obj{TeXcode} object. For the top level files, i.e. the ones specified on the command line, the search path will contain only \code{\$workdir}: the directory from which \TeXcount{} is executed unless \code{-dir} is used to specify otherwise. If more directories are added to the path, \code{\$workdir} will remain the last directory of the search path, while the first directory of the search path will be considered the current directory.
+
+File inclusion macros can also take parameters that should be parsed using regular macro parsing rules. The \code{TeXmacro} hash will be checked for \code{@pre\bs{macroname}} and \code{@post\bs{macroname}} entries which will be applied before and after the file handling rules.
+
+
+\subsection{Package and document class specific rules}
+
+Whenever \TeXcount{} encounters a package inclusion, it will check for package specific rules. These are defined in hashes names \code{\%PackageTeXmacro} etc. which maps the package name to the hash map of rules to be added to \code{\%TeXmacro} etc. There is an additional \code{\%PackageSubpackage} which for each package name in the set of keys maps to a list of packages whose rules should automatically be included.
+
+Similarly, rules specific to particular document classes may be implemented by using the key \code{class\%\parm{name}} instead of the package name, and these will then be added to the set of parsing rules if \code{\bs{documentclass}\{\parm{name}\}} is encountered.
+
+Note that rules for including the bibliography is also stored in these hashes under the key \code{\%incbib}.
+
+
+
+\section{Presentation of summary statistics}
+
+The counts (words, headers, etc.) from a \LaTeX{} document are stored as a \Obj{count} objects. The main routine for printing the summary statistics from a \Obj{count} object is \code{print_count}: the routine \code{conditional_print_total} which is called from \code{MAIN} delegates printing to \code{print_count} except if the brief output format is selected. The \code{print_count} routine then delegates the printing to one of a number of subroutines depending on the settings.
+
+Word frequencies are store globally in \code{\%WordFreq}. This gets incremented each time \code{_process_word} is called. Summary of word frequencies are produced and printed by \code{print_word_freq} which tries to combine words that differ only by capitalization, and also produces subcounts per character class.
+
+A global count of the number of errors reported is stored in \code{\$errorcount}, while warnings are stored globally in the \code{\%warnings} hash mapping when added through the \code{warning} routine with the warning as key and the number of occurrences as value to ensure each warning is only listed once no matter how many times it is reported. Both warnings and errors are also stored in their respective \Obj{Main} or \Obj{TeXcode} objects when reported through calls to \code{error} or \code{warning}.
+
+In \code{MAIN}, after processing of the \LaTeX{} documents, \code{Report_Errors} is called to give a total report on errors and warnings. The exact output depends on the settings. 
+
+NB: Processing of errors and warnings requires some improvement. Now, parts of the code handle errors per file, others do so globally.
+
+
+
+\section{Encodings}
+
+The preferred encoding is Unicode UTF-8. From version 2.3 of \TeXcount{}, this is used internally to represent the \LaTeX{} code, and Unicode is relied upon to handle different character sets and classes.
+
+When files are read into \TeXcount{}, they may have to be decoded from whatever encoding they are saved in into UTF-8. The file encoding may be specified explicitly using the \code{-enc=} option, otherwise \TeXcount{} will try to guess the appropriate encoding.
+
+The output from \TeXcount{} is be default UTF-8. However, if a file encoding is specified using \code{-enc=} and output is text, not HTML, this encoding will also be applied to the output. This may be useful when using \TeXcount{} in a pipe, otherwise the documents will be converted to UTF-8.
+
+
+
+\section{Help routines and text data}
+
+A hash, \code{\%GLOBALDATA}, and hash reference \code{\$STRINGDATA} are is defined for storing strings used for various outputs. The \code{\%GLOBALDATA} is set up containing string constants for version number, maintainer name, etc., while \code{\$STRINGDATA} is initially undefined.
+
+The \code{\$STRINGDATA} hash is accessed through calls to \code{StringData} which initialises the hash if undefined. Initialisation, which is done by \code{STRINGDATA}, reads through the \code{__DATA__} section at the end of the script, identifies headers which are used as keys in the hash which maps to and array containing the subsequent text lines. References in the read text on the form \code{\$\{keyword\}} are replaced by the corresponding string in \code{\%GLOBALDATA}: this allows e.g. version information to be inserted into the text.
+
+Headers in the text data consists of three or more colons followed by space(s) and a keyword. Lines containing three or more colons but no keyword have no effect.
+
+Lines starting with \code{\@} are used to format output printed by \code{wprintlines}. The two characters \code{'-'} and \code{':'} can then be used to indicate indentation tabulators, and subsequent lines will be indented and wrapped: this is used for printing help on command line options. The \code{wprintlines} also wraps text: the page with is set by \code{\$Text::Wrap::columns}.
+
+
+\end{document}

@@ -1,0 +1,325 @@
+################ TODO ################
++ Enclose paths in "..." in Parse_file_list rather than use "\ ".
++ Make sure QuickReference is included on web page.
++ Add list of macro handling rules/states to web page.
+- Default inclusion of packages.
+- Add macro *-option gobbling rules for various macros.
+- Ability to subcount macro/environment content.
+? Korean should by default count words instead of characters.
+? Allow subfiles documentclass to automatically import the subfiles package?
+? Ability to choose macro rules depending on macro *-modifier.
+? Rule for macros defining new macros with specified rules.
+? Remove default option gobbling after end of macro.
+? Precompile static patterns (qr/.../).
+? Handle inserted separator better, e.g. in -v1.
+? Multiple CSS alternatives in cgi version.
+? Option to check for or exclude non-TeX files/text (for CGI version)
+? Make executable (PAR::Packer)
+
+
+############### HISTORY ###############
+>>> Version 3.0.0.24 (2014 April 11) <<<
+- Fixed specialchars like \mu: need space or other separator after it
+- Added -out-stderr option to output to STDERR
+- Fixed: Handle missing Win32::Console::ANSI gracefully
+>>> Version 3.0 (2013 July 29) <<<
+>>> Version 3.0beta.74 (2013 June 4) <<<
+- Fixed: Include macrocount in preamble (if defined as preambleinclude).
+- Fixed: Combination of comments and spaces breaks macro parameters.
+- Fixed/improved error printing: print to STDERR if no other output is found.
+- Use defaultprintlevel (e.g. in styles) to avoid overruling explicit printlevel setting (e.g. -q).
+- Added -tex option for coding special TeX characters.
+- Relaxed the general option content regex, using present regex as strict rule.
+- Fixed simple token parameter handling: removed STDERR output.
+- Added style 'mathcmd' for macros inside maths.
+- Added %TC:insert command.
+- Ignore \documentclass also under EXCLUDE_STRONGER. 
+- Log macro symbols as symbols.
+- Exclude control characters from use in macro symbols.
+- Fixed: macro statistics replace non-printable characters in macro names.
+>>> Version 3.0beta (2012 May 30) <<<
+- Added rules for various packages.
+- Fixed 3.0a bug: In add_to_total, must add null-counts in case file>0.
+- Allow package rules for package, preamble and float inclusion.
+- Document class specific macro rules.
+- Implemented subpackage inclusion ($PackageSubpackage).
+- Ensure packages are included only once (%IncludePackages).
+- With -h=package:macro, exclude all other rules.
+- Warning when using TC:macro name where name does not start with "\"?
+- Added nooption/autooption rule to turn off/on option gobbling.
+- Fixed: Environment name not output after \end when contents is strongly ignored.
+- Fixed 3.0a bug: STATE_MATH should have priority over text states.
+- Fixed 3.0a bug: STATE_TO_FLOAT -> STATE_FLOAT, not to STATE_TEXT_FLOAT
+  which caused all contents of floats to be counted.
+- Apply ['xxx'] rule in tabular.
+- Upgraded 'xxx' rule to also exclude $ and $$.
+>>> Version 3.0alpha (2012 January 9) <<<
+- Avoided use of $`, $& and $'.
+- Added -htmlfile= to specify HTML template.
+- Fixed: Convert CNT and STATE keys to lowercase during lookup.
+- Fixed: initialise %STYLE using $defaultVerbosity.
+- Fixed: report error on unfound file.
+- Macro statistics stores modifier, parameter and option usage.
+- Save TeXcode state while parsing included file.
+- Report errors/warnings per file in template.
+- Added warnings and errorcount to count object, and add warning/errors to them.
+- Fixed: do not include {} in parameter styling (dsmath).
+- Added -help-style and -help-style=.
+- Added -css= and -cssfile= for specifying external CSS for HTML output.
+- Dropped $showstates except as an option flag; state printing based on style only.
+- Fixed: apply file inclusion in preamble.
+- Use $STYLE_EMPTY, $STYLE_BLOCK instead of ' ' and '-'.
+- Made customisable -v option (-v=...).
+- For STDIN, default work dir is current dir.
+- Fixed: printing of macro modifiers (*).
+- Fixed: \verb* should work like \verb.
+- Added TC:newcounter key=like-key to specify similar counter.
+- CGI: Log package and macro usage (if option macrousagelog is set).
+- Added %MacroUsage for logging macros, environments and packages, and -macrostat.
+- Changed macroword to macrocount.
+- Changed 'status' to 'state' throughout.
+- Moved routines from sub_parse into new sub_tokenise.
+- Fixed: Should be able to parse letters as simple tokens.
+- Added: -help-options (-h-opt) and -h-opt=.
+- Added colour with text output under Windows (works so-so).
+- In rule help: increment counters, optional parameters.
+- Replace group with envir, e.g. %TeXenvir, %TC:envir, etc.
+- Added: Separate path (-auxdir=) to use with bibliography.
+- Added: The import package.
+- Added: Handling of file inclusion parameters.
+- Added: Search path to TeXcode object.
+- Added: Rules for parsing optional parameters.
+- Added: %TC:newcounter for adding new counters.
+- Use keys to specify counters in template.
+- Cleaning up parsing code, switching to transition states.
+- Added: %TC:macroword can increase any counter.
+- Fixed: Headers counted for abstract, thebibliography without hard-coded rules.
+- Array in macroword can add to any counter.
+- Use string, not numeric codes, when setting up %TeXgroup, %TeXmacro.
+- Macro parameters can no longer be whole words (unless in braces).
+- Remove %TeXheader from code: replace by %TeXmacro 'header' rule.
+- Define %status2desc, and use in _print_rule_*.
+- Fixed: include_package should not convert macroword values.
+- Include subcounts array in count at creation.
+- Checked for variables in regexs that should be quoted.
+- Fixed \verb+...+ bug.
+- Added output to file (-out=).
+- Handle transition states in _parse_unit.
+- Keys for transition states.
+- Parsing style for math.
+- Rule specification by name rather than code number.
+- Use key names to identify counters.
+>>> Fixed version 2.3 (2011 July 30) <<<
+- Fixed: CGI language defaults to count-all (not alphabetic as before).
+- Fixed: Character classes must start with In or Is, or may not work!
+>>> Version 2.3 (2011 July 28) <<<
+- Added -nosep and -sep= options to add separator after word.
+- Speedup: Precompile regex in print_word_freq (sub_output).
+>>> Version 2.3.beta.84 (2011 April 27) <<<
+- Added -words-only option.
+- Added -korean-words option.
+- Change Korean (Hangul) to being logographic by default.
+- Allow multiple package names in package inclusion.
+- Checked that all status numbers have been replaced.
+- Use $STATUS..., $CNT... and $TOKEN... instead of numerical codes.
+- Convert special characters in HTML: defined sub text_to_print().
+- Use absolute ignore for verbatim, tikzpicture, etc.?
+- Added character class cjkpunctuation.
+- Fixed rules for \renewenvironment.
+>>> Version 2.3.beta (2011 March 08) <<<
+- Require that \end matches \begin in status>-2.
+- Add status -4 ignoring everything, and use for %TC:ignore.
+>>> Version 2.3.alpha.956 (2011 February 12) <<<
+- Added -letters-only and -countall.
+- Extracted help text into __DATA__ value.
+- Replace _ in character class with space.
+- Interpret 'Alphabetic' using 'alphabetic' (and warn).
+- Fixed problem when no script is given: use \w+ as fallback.
+- Character classes 'alphabetic' and 'alphanumeric' defined.
+- Errors are buffered until options have been set (and HTML opened).
+- Allow flexible setting of languages: -alphabet=, -logogram=.
+- No extra line breaks when using -brief.
+- Included files have 'Included file' in title.
+- Add word class counts (-stat).
+- Add -...-only to Chinese and Japanese.
+- Use @AlphabetScripts and @LogogramScripts for word rules.
+- Fixed letter/word definition so Han cannot compose words.
+- Remove -latin option: should use enc= instead.
+- Replace \w with list of character classes.
+- Warn of invalid characters and decoding failures (depends on encoding).
+- Added source parameter to print_error throughout.
+- Move parts of -relaxed to default, and implement -restricted.
+- Guess encodings for Chinese and Japanese.
+- Count objects link to TeXcode or parent count.
+- Add outputEncoding, and removed utf8flag.
+- Use 'guess' encoding (default) to test from list.
+- Added -encoding= option to specify encoding.
+- Fixed: Split file into paragraph also when included.
+- Fixed problem with TC:subst that made it apply to active line only.
+- Move decoding to TeXcode code inclusion using new methods.
+- Defined \verb rule (strong exclude) and changed verbatim rule to -3.
+- Option -0: same as -1 but with no \n at end.
+- Convert all strings to Unicode internally.
+- Set utf8 as default.
+- Add -latin1 option.
+>>> Version 2.3.alpha.547 (2011 January 17) <<<
+- TC option to set/unset incbib option.
+- CGI/WEB: Add include biliography option.
+- Word freq: handle capital letters (not all lower).
+- WEB: Letter count added to web service.
+- Fixed: Outputs {file}\input when \input{file} is in text.
+- Fixed: Need to check for words early in __get_next_token when used
+  with -relaxed, or things like {W}ord will not be recognised.
+- Automatic inclusion of bbl file when using -incbib and \bibliography.
+- Add -incbib (and -nobib) for allowing thebibliography to be counted.
+- Permit macros with parameters to also be macro words.
+>>> Version 2.3.alpha.480 (2010 November 22) <<<
+- Remove some blank lines in verbose levels < 3.
+- Fixed: When using -1, include end of line.
+- Fixed: Don't write warnings in quiet mode.
+- Changed URL in help text.
+- Fixed: Space, blank lines, leading spaces in HTML.
+- Fixed: Allow space before macro parameters and options.
+- Fixed: Allow space after \begin and \end.
+- Fixed: Bug causing double line breaks in verbose output.
+- Apply -showver to text output
+- Switch to use utf8.
+- Implement warnings and report these with error reporting.
+- Fixed: TC:group didn't allow negative option.
+- CGI: Add texlength and nonascii to TeX object.
+- CGI: Change log line, and logging test.
+- Add option -freq=N to count words with freq>=N.
+- Some refactoring to organise code better.
+- CGI: showversion option added.
+- Add version to HTML title, and options -showver, -nover.
+- CGI: Write log to LOG/texcount.log, don't check for Test.
+- Fixed: Problem with parsing template.
+- Print spaces separately rather than gobble, and don't print
+  extra spaces after tokens. Instead, box words in style.
+- Speed up regex in __get_next_token() so they compile, and use
+  simple test on first character to reduce number of tests.
+- Speed up by splitting files into paragraphs (-split default)
+  with option to run on file as string (-nosplit).
+- Word frequency (-freq) added.
+- CGI: Check if LaTeX code is ASCII, notify if not.
+- CGI: Set utf8flag as default (applies to form input).
+- CGI: Drop locale from startup.
+- CGI: Add file size to log.
+- Implemented -merge to include subdocuments in place.
+- Fixed: Allow general macro/group names in TC instructions.
+>>> Version 2.3.alpha.29 (2010 July 23) <<<
+- Fixed: Files/paths containing space.
+- Added support for reading file from STDIN.
+- Fixed: Added macroword to files in ignored regions.
+>>> Version 2.3.alpha (2010 June 20) <<<
+- Only count _top_ as subcount if non-empty.
+- Rename some methods.
+- Allow specification of default options in script.
+- Make sure path separator is added to -dir path.
+- Fixed line shift in subcounts in text mode.
+- Implement {SUB?prefix|template|suffix?SUB} in template.
+- In option file: only %instr, not %TC:instr.
+- Implement global substitution: %subst.
+- Warn of invalid options in options file.
+- Some more fixing of header printing.
+- No sum count w/incl. when only one initial file.
+>>> Version 2.2.6 (2010 June 09) <<<
+- Implement %TC:subst.
+- Bug fixed: Warn if inclusion file is not recognisable.
+- Make TC commands case insensitive.
+- Fixed header inclusion (HTML vs. text) causing double headers.
+- Return to -nosum as default.
+- Remove -vv, -vvv and -vvvv options.
+- Separate HTML class for sum counts.
+>>> Version 2.2.5 (2010 June 08) <<<
+- Sum per file including included files versus total.
+- Refactoring/simplifying code, renaming methods (_*, __*).
+- Added comments to all methods and variables.
+- Implement word wrap in help printing.
+- Allow "TC" to be any case, not only upper case.
+- Implement -strict warning of groups with no rule defined.
+- %TC:group second option set to 1 (count as text) if missing.
+- Set -sum and -sub as default, and add -nosum and -nosub options.
+- Turn off ANSI colours by default under Windows.
+- Implement -col option to switch ANSI colours on.
+>>> Version 2.2.4 (2010 June 07) <<<
+- Apply TC commands from option file.
+- Impl. option file (-opt=) for options (incl. template).
+- Implement %TC:template and %TC:newtemplate.
+>>> Version 2.2.3 (2010 June 06) <<<
+- Set file counts as subcounts in total count.
+- Reorganise files slightly.
+- Implementation of output template and -template option.
+- Give warning if begin and end groups mismatch.
+- Allow -sum to take decimal numbers.
+- Fix: Add groups equation*, etc.
+- Added -incpackage= for package inclusion (with -h=).
+- Implementation of package specific rules.
+- Added -h=macro option giving help on macro rules.
+- Add -char/-letter option to count letters.
+>>> Version 2.2 (2009 Apr 30) <<<
+- Add {\w} to relaxed letters.
+- Factor out Report_ErrorCount and add to CGI version.
+- Correct $errorcount>=0 to >0.
+>>> Version 2.2.beta (2009 Mar 17) <<<
+- Trimming definitions from CGI/CMD versions.
+- Move routines out of sub_options to better locations.
+- Add options (chinese, japanese) to the CGI version.
+- Add UTF-8 support to the CGI version
+- Fix %TC:group handling.
+- Add rule for align group.
+- Add exclmacro style for macros in excluded regions.
+- Add -japanese.
+- Implement UTF-8 support and -utf8 option.
+- Add -chinese: add Chinese character rule to WordPatterns.
+- Change word pattern handling: define LetterPattern instead.
+>>> Fixed Version 2.1 (2008 Nov 08) <<<
+- Fixed -sub default to subsection, and build script to using
+  Linux end-line. Updated 2.1 version.
+- Some refactoring to clean up and modularise code.
+>>> Release: 2.1 (2008 Nov 02) & web-interface <<<
+- Split up scipt into smaller files, and use _BUILD_ to merge
+  them into one.
+- Add help.
+- Make default (no -sub) ignore %TC-defined subcounts.
+- Refactor code
+>>> Prerelease: 2.1.beta (2008 Oct 30) <<<
+- TC option breakmacro implemented and documented.
+- Fixed: Breakpoint with -sub trims title for \section* etc.
+- Add code style help.
+>>> Prerelease: 2.1.alpha (2008 Jul 09) <<<
+- TC:ignore--endignore to ignore segments.
+- For file include, swapped 1 and 2 to make compatible with
+  version 2.0.
+- Print subcounts when these are specified.
+- Implemented subcounts, changed most references to $count to be
+  through $tex since this is no longer static. Added detection of
+  breakpoints (as TC commands or from macros), and option (with
+  parameters) -sub[=none|part|chapter|section|subsection] to turn
+  this function on.
+- Implemented subcounts into data structure.
+- Implemented dynamic word and macro option rules, and added an
+  option, -relaxed, for more relaxed rules.
+- Cumulative sums added at end of each line when using -sum with
+  verbose output.
+- Option -dir and -dir= to set working directory.
+- Bug-fix: Fixed parsing of $$...$$ as this didn't work.
+- Bug-fix: Use working dir, don't get path from parent file
+- Options -brief and -sum ==> -total.
+- Optons -sum to produce total word cound.
+- Option -total to give only total sum.
+- Fix output a bit for one-line summaries (-brief).
+- Fix TeXfileinclude so it always adds .tex for \include (=1), and
+  for \input if filetype is lacking (=2).
+>>> Reuploaded to CTAN: updated license, LaTeX source included <<<
+>>> Released: 2.0 (2008 Feb 10) <<<
+- Change #! reference to "/usr/bin/env perl" and use warnings
+  instead of option -w.
+- Handle neighboring $...$ without separating space.
+- Changed name of rule from exclude to macro, and changed TeXexcl
+  to TeXmacro.
+- Update documentation and web-page: default handling of begin-end
+  was incorrect.
+- Fixed \newcommand etc. (to [-3,-3]) in exclude and preamble.
+>>> Released: 2.0.beta (2008 Jan 31) <<<
+

@@ -1,0 +1,48 @@
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage{a4wide}
+
+\include{macros}
+
+
+\title{%
+\TeXcount{} Quick Reference Guide\\
+Version \version\copyrightfootnote
+}
+
+\begin{document}
+
+\maketitle
+
+\section{Command line options}
+
+Syntax for running \TeXcount{}:
+\codeline{texcount \textit{[options] [files]}}
+where \code{texcount} refers to the TeXcount Perl-script, and the options may be amongst the following:
+
+\input{sub_options}
+
+
+\section{\TeXcount{} instructions embedded in \LaTeX{} documents}
+
+Instructions to \TeXcount{} can be given from within the
+\LaTeX{} document using \LaTeX{} comments on the format
+\codeline{\%TC:\textit{instruction [name] parameters}}
+where the name is use for instructions providing macro handling rules to give the name of the macro or group for which the rule applies.
+%
+\input{sub_tc_other}
+
+Instructions for adding macro handling rules all take the format
+\codeline{\%TC:\textit{instruction name parameters}}
+where the name indicates the macro (with backslash) or group name for which the rule applies:
+%
+\input{sub_addrules}
+
+The available parser rules for environment contents and macro parameters are \code{word}/\code{text}, \code{headerword}, \code{otherword}, \code{header}, \code{float}, \code{inlinemath}, \code{displaymath}, \code{ignore}, \code{xx} (strong exclude), \code{xxx} (stronger exclude), \code{xall} (exclude all) or any of their aliases.
+
+The available counters are \code{word}/\code{text}, \code{headerword}, \code{otherword}, \code{header}, \code{float}, \code{inlinemath}, \code{displaymath} or any of their aliases.
+
+Available file specifications contain one or more of \code{input} (for \code{\bs{input}}), \code{file} (file path), \code{texfile} (use with \code{\bs{include}}), \code{<bbl>} (to include the bibliography file), \code{dir} and \code{subdir}. The \code{dir} and \code{subdir} are used to modify the search path within the included document (used with the \code{import} package).
+ 
+
+\end{document}

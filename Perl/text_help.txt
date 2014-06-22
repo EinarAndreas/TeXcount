@@ -1,0 +1,162 @@
+::::::::::::::::::::::::::::::::::::::::
+:::::::::: Version
+TeXcount version ${versionnumber}, ${versiondate}.
+
+:::::::::: Reference
+The TeXcount script is copyright of ${maintainer} (${copyrightyears}) and published under the LaTeX Project Public Licence.
+
+Go to the TeXcount web page
+    ${website}
+for more information about the script, e.g. news, updates, help, usage tips, known issues and short-comings, or to access the script as a web application. Feedback such as problems or errors can be reported to einarro@ifi.uio.no.
+
+:::::::::: License
+TeXcount version ${versionnumber}
+  
+Copyright ${copyrightyears} ${maintainer}
+
+The TeXcount script is published under the LaTeX Project Public License (LPPL)
+    http://www.latex-project.org/lppl.txt
+which grants you, the user, the right to use, modify and distribute the script. However, if the script is modified, you must change its name or use other technical means to avoid confusion.
+
+The script has LPPL status "maintained" with ${maintainer} being the current maintainer.
+
+::::::::::::::::::::::::::::::::::::::::
+:::::::::: ShortHelp
+Syntax: texcount.pl [options] files
+
+Use option -help (or just -h) to get help; -help-options (-hopt) to get list of command line options, or -help-options=substring for help on all options containing substring.
+
+::::::::::::::::::::::::::::::::::::::::
+:::::::::: HelpTitle
+***************************************************************
+*   TeXcount version ${versionnumber}, ${versiondate}
+*
+
+Count words in TeX and LaTeX files, ignoring macros, tables, formulae, etc.
+
+::::::::::::::::::::::::::::::::::::::::
+:::::::::: OptionsHead
+
+Syntax: texcount.pl [options] files
+
+Options:
+
+:::::::::: OptionsPrefix
+@ -          :
+:::::::::: Options
+  -relaxed      Uses relaxed rules for word and option handling: i.e. allows more general cases to be counted as either words or macros.
+  -restricted    Restricts the rules for word and option handling.
+  -v            Verbose (same as -v3).
+  -v0           Do not present parsing details.
+  -v1           Verbose: print parsed words, mark formulae.
+  -v2           More verbose: also print ignored text.
+  -v3           Even more verbose: include comments and options.
+  -v4           Same as -v3 -showstate.
+  -v=, v0=, ..., -v4=    Set verbosity by adding/removing particular types of token (styles) to include in the verbose output. Use -help-style to get details of which tokens are included in each style, and of classes of tokens (style categories).
+  -showstate    Show internal states (with verbose).
+  -brief        Only prints a brief, one line summary of counts.
+  -q, -quiet    Quiet mode, no error messages. Use is discouraged!
+  -strict       Strict mode, warns against begin-end groups for which rule are not defined.
+  -sum, -sum=   Make sum of all word and equation counts. May also use -sum=#[,#] with up to 7 numbers to indicate how each of the counts (text words, header words, caption words, #headers, #floats, #inlined formulae, #displayed formulae) are summed. The default sum (if only -sum is used) is the same as -sum=1,1,1,0,0,1,1.
+  -nosum        Do not compute sum.
+  -sub, -sub=   Generate subcounts. Option values are none, part, chapter, section or subsection. Default (-sub) is set to subsection, whereas unset is none. (Alternative option name is -subcount.)
+  -nosub        Do not generate subcounts.
+  -col          Use ANSI colours in text output.
+  -nc, -nocol   No colours (colours require ANSI).
+  -nosep, -noseparator   No separating character/string added after each word (default).
+  -sep=, -separator=   Separating character or string to be added after each word.
+  -html         Output in HTML format.
+  -htmlcore     Only HTML body contents.
+  -htmlfile=    HTML template file to use with the -html option. Use <!-- TeXcode --> to indicate where the output from TeXcount should be inserted.
+  -tex          Encode TeX special characters for output into TeX code
+  -cssfile=     CSS file to include instead of default styles.
+  -css=         CSS href to include instead of default styles. Can use -css=file:{filename} instead of -cssfile={filename}.
+  -opt=, -optionfile=   Read options/parameters from file.
+  -             Read LaTeX code from STDIN.
+  -inc          Parse included TeX files (as separate file).
+  -merge        Merge included TeX files into code (in place).
+  -noinc        Do not include included tex files (default).
+  -incbib       Include bibliography in count, include bbl file if needed.
+  -nobib        Do not include bibliography in count (default).
+  -incpackage=    Include rules for the given package.
+  -total        Do not give sums per file, only total sum.
+  -1            Same as -brief and -total. Ensures there is only one line of output. If used in conjunction with -sum, the output will only be the total number. (NB: Character is the number one, not the letter L.)
+  -template=    Speficy an output template. Use {1},...,{7}, {SUM} and {TITLE} to include values, {1?...?1} etc. to conditionally include sections, {1?....|...?1} etc. to specify an alternative text if zero. To include subcounts, use {SUB?...?SUB} where ... is replaced with the template to use per subcount. Line shift may be specified using \\n.
+  -dir, -dir=   Specify the working directory using -dir=path. Remember that the path must end with \\ or /. If only -dir is used, the directory of the provided file is used and paths (e.g. included files) are assumed to be absolute or relative to this. The default at startup is -dir=. which means that the directory from which TeXcount is run is the working directory with all paths absolute or relative to this.
+  -auxdir, -auxdir=   Specify directory for auxilary files, e.g. the bibliograph (.bbl) file. If only -auxdir is used, the working directory (as determined by -dir or -dir=) is assumed. If -auxdir= is used with -dir=, it sets the path to the auxilary directiry. If -auxdir= is used with -dir, the working directory is determined from the location of the provided file, and the path to the auxilary directory is assumed to be absolute or relative to this.
+  -enc=, -encoding=    Specify encoding (default is to guess the encoding).
+  -utf8, -unicode    Selects Unicode (UTF-8) for input and output. This is automatic with -chinese, and is required to handle e.g. Korean text. Note that the TeX file must be save in UTF-8 format (not e.g. GB2312 or Big5), or the result will be unpredictable.
+  -alpha=, -alphabets=    List of Unicode character groups (or digit, alphabetic) permitted as letters. Names are separated by ',' or '+'. If list starts with '+', the alphabets will be added to those already included. The default is Digit+alphabetic.
+  -logo=, -logograms=    List of Unicode character groups interpreted as whole word characters, e.g. Han for Chinese characters. Names are separated by ',' or '+'. If list starts with '+', the alphabets will be added to those already included. By default, this is set to include Ideographic, Katakana, Hiragana, Thai and Lao.
+  -ch, -chinese, -zhongwen    Turns on support for Chinese characters. TeXcount will then count each Chinese character as a word.
+  -jp, -japanese    Turns on support for Japanese characters. TeXcount will count each Japanese character (kanji, hiragana, and katakana) as one word, i.e. not do any form of word segmentation.
+  -kr, -korean    Turns on support for Korean. This will count hangul and han characters, i.e. with no word separation. NB: Experimental!
+  -kr-words, -korean-words    Turns on support for Korean words, i.e. hangul words separated by characters. Han characters are still counted as characters. NB: Experimental!
+  -ch-only, ..., -korean-words-only    As options -chinese, ..., -korean-words, but also excludes letter-based words or trims down the character set to the minimum.
+  -char, -character, -letters    Counts letters/characters instead of words. Note that spaces and punctuation is not counted.
+  -char-only, ..., -letters-only    Like -letters, but counts alphabetic letters only.
+  -countall, -count-all    The default setting in which all characters are included as either alphabets og logograms.
+  -freq, -freq=    Produce individual word frequency table. Optionally give minimal number of occurences to be listed.
+  -stat         Produce statistics on language/script usage.
+  -macrostat, -macrofreq    Print macro usage statistics.
+  -codes        Display output style code overview and explanation. This is on by default.
+  -nocodes      Do not display output style code overview.
+  -out=         Write output to file, give filename as option value.
+  -out-stderr   Write output to STDERR instead of STDOUT.
+  -h, -?, -help, /?    Help text.
+  -h=, -?=, -help=, /?=    Takes a macro or group name as option and returns a description of the rules for handling this if any are defined. If handling rule is package specific, use -incpackage=package name: -incpackage must come before -h= on the command line to take effect.
+  -help-options, -h-opt    List all options.
+  -help-options=, -h-opt=   List all options containing the provided string, e.g. -h-opt=dir or -h-opt=-v (the initial - in -v causes only options starting with v to be listed).
+  -help-style   List the styles and style categories: i.e. those permitted used with -v={styles-list}.
+  -help-style=   Give description of style or style category.
+  -ver, -version    Print version number.
+  -lic, -license, -licence    Licence information.
+
+::::::::::::::::::::::::::::::::::::::::
+:::::::::: HelpText
+The script counts words as either words in the text, words in headers/titles or words in floats (figure/table captions). Macro options (i.e. \\macro[...]) are ignored; macro parameters (i.e. \\macro{...}) are counted or ignored depending on the macro, but by default counted. Begin-end groups are by default ignored and treated as 'floats', though some (e.g. center) are counted.
+
+Mathematical formulae are not counted as words, but are instead counted separately with separate counts for inlined formulae and displayed formulae. Similarly, the number of headers and the number of 'floats' are counted. Note that 'float' is used here to describe anything defined in a begin-end group unless explicitly recognized as text or mathematics.
+
+The verbose options (-v1, -v2, -v3, showstate) produces output indicating how the text has been interpreted. Check this to ensure that words in the text has been interpreted as such, whereas mathematical formulae and text/non-text in begin-end groups have been correctly interpreted.
+
+Summary, as well as the verbose output, may be produced as text (default) or as HTML code using the -html option. The HTML may then be sent to file which may be viewed with you favourite browser.
+
+Under UNIX, unless -nocol (or -nc) has been specified, the output will be colour coded using ANSI colour codes. Counted text is coloured blue with headers are in bold and in HTML output caption text is italicised. Use 'less -r' instead of just 'less' to view output: the '-r' option makes less treat text formating codes properly. Windows does not support ANSI colour codes, and so this is turned off by default.
+
+:::::::::: TCinstructions
+Parsing instructions may be passed to TeXcount using comments in the LaTeX files on the format
+@ -      :
+  %TC:instruction arguments
+and are used to control how TeXcount parses the document. The following instructions are used to set parsing rules which will apply to all subsequent parsing (including other files):
+  %TC:macro [macro] [param.states]
+    |    macro handling rule, no. of and rules for parameters
+  %TC:macroword [macro] [number]
+    |    macro counted as a given number of words
+  %TC:header [macro] [param.states]
+    |    header macro rule, as macro but counts as one header
+  %TC:breakmacro [macro] [label]
+    |    macro causing subcount break point
+  %TC:group [name] [param.states] [content-state]
+    |    begin-end-group handling rule
+  %TC:floatinclude [macro] [param.states]
+    |    as macro, but also counted inside floats
+  %TC:preambleinclude [macro] [param.states]
+    |    as macro, but also counted inside the preamble
+  %TC:fileinclue [macro] [rule]
+    |    file include, add .tex if rule=2, not if rule=0, if missing when rule=1
+The [param.states] is used to indicate the number of parameters used by the macro and the rules of handling each of these: the format is [#,#,...,#] with # representing one number for each parameter giving the parsing state to use for that parameter, alternatively just a single number (#) indicating how many parameters to ignore (parsing state 0). The option [content-state] is used to give the parsing state to use for the contents of a begin-end group. The main parsing states are 0 to ignore and 1 to count as text.
+
+Parsing instructions which may be used anywhere are:
+@ -                         :
+  %TC:break [title]         add subcount break point here
+  %TC:incbib                include bibliography (same as running with -incbib)
+  %TC:ignore                ignore region, end with %TC:endignore
+  %TC:insert [code]         insert code for TeXcount to process as TeX code
+  %TC:newtemplate           start a new template, ie delete the existing one
+  %TC:template [template]   add another line to the template specification
+See the documentation for more details.
+
+Command line options and most %TC commands (prefixed by % rather than %TC:) may be placed in an options file. This is particularly useful for defining your own output templates and macro handling rules.
+
+::::::::::::::::::::::::::::::::::::::::
