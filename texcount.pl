@@ -20,7 +20,7 @@ if ($^O=~/^MSWin/) {
 
 ##### Version information
 
-my $versionnumber="3.0.0.25";
+my $versionnumber="3.0.0.26";
 my $versiondate="2014 Jun 23";
 
 ###### Set global settings and variables
@@ -455,6 +455,7 @@ my $LetterPattern=$NamedLetterPattern{'default'};
 # alphabet/logogram settings.
 my %NamedWordPattern;
 $NamedWordPattern{'letters'}='@';
+$NamedWordPattern{'letterspace'}='(@|\s+)';
 $NamedWordPattern{'words'}='(@+|@+\{@+\}|\{@+\}@+)([\-\'\.]?(@+|\{@+\}))*';
 my @WordPatterns=($NamedWordPattern{'words'});
 my $WordPattern; # Regex matching a word (defined in apply_language_options())
@@ -1379,6 +1380,13 @@ sub set_language_option {
     $countdesc[2]='Letters in headers';
     $countdesc[3]='Letters in captions';
     return 'letter';
+  } elsif ($language=~/^(char|character|letter)s?(-?space)?$/) {
+    @WordPatterns=($NamedWordPattern{'letterspace'});
+    if (defined $2) {@LogogramScripts=();}
+    $countdesc[1]='Letter+space in text';
+    $countdesc[2]='Letter+space in headers';
+    $countdesc[3]='Letter+space in captions';
+    return 'letterspace';
   } else {
     return undef;
   }

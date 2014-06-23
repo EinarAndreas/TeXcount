@@ -38,6 +38,7 @@ my $LetterPattern=$NamedLetterPattern{'default'};
 # alphabet/logogram settings.
 my %NamedWordPattern;
 $NamedWordPattern{'letters'}='@';
+$NamedWordPattern{'letterspace'}='(@|\s+)';
 $NamedWordPattern{'words'}='(@+|@+\{@+\}|\{@+\}@+)([\-\'\.]?(@+|\{@+\}))*';
 my @WordPatterns=($NamedWordPattern{'words'});
 my $WordPattern; # Regex matching a word (defined in apply_language_options())

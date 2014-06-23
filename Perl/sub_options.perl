@@ -123,6 +123,13 @@ sub set_language_option {
     $countdesc[2]='Letters in headers';
     $countdesc[3]='Letters in captions';
     return 'letter';
+  } elsif ($language=~/^(char|character|letter)s?(-?space)?$/) {
+    @WordPatterns=($NamedWordPattern{'letterspace'});
+    if (defined $2) {@LogogramScripts=();}
+    $countdesc[1]='Letter+space in text';
+    $countdesc[2]='Letter+space in headers';
+    $countdesc[3]='Letter+space in captions';
+    return 'letterspace';
   } else {
     return undef;
   }
