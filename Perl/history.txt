@@ -2,6 +2,7 @@
 + Enclose paths in "..." in Parse_file_list rather than use "\ ".
 + Make sure QuickReference is included on web page.
 + Add list of macro handling rules/states to web page.
++ Implement: count characters including spaces (and punctuation?).
 - Default inclusion of packages.
 - Add macro *-option gobbling rules for various macros.
 - Ability to subcount macro/environment content.

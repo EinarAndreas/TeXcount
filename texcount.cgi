@@ -8,8 +8,8 @@ set_message('Please send information about this error to einarro@ifi.uio.no toge
 
 ##### Version information
 
-my $versionnumber="3.0.0.24";
-my $versiondate="2014 Apr 08";
+my $versionnumber="3.0.0.25";
+my $versiondate="2014 Jun 23";
 
 ###### Set global settings and variables
 
