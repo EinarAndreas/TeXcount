@@ -19,6 +19,9 @@
 
 
 ############### HISTORY ###############
+- Fixed: Bug in relaxed macro option pattern.
+- Fixed: Moved ANSI import to after eval test.
+- Fixed flush_next_gobble_space: Don't gobble %TC: as comment.
 >>> Version 3.0.0.24 (2014 April 11) <<<
 - Fixed specialchars like \mu: need space or other separator after it
 - Added -out-stderr option to output to STDERR

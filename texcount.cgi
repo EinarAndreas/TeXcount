@@ -8,8 +8,8 @@ set_message('Please send information about this error to einarro@ifi.uio.no toge
 
 ##### Version information
 
-my $versionnumber="3.0.0.25";
-my $versiondate="2014 Jun 23";
+my $versionnumber="3.0.0.33";
+my $versiondate="2014 Sep 20";
 
 ###### Set global settings and variables
 
@@ -453,7 +453,7 @@ my $WordPattern; # Regex matching a word (defined in apply_language_options())
 # a macro.
 my %NamedMacroOptionPattern;
 $NamedMacroOptionPattern{'default'}='\[[^\[\]\n]*\]';
-$NamedMacroOptionPattern{'relaxed'}='\[[^\[\]\n]*(\n[^\[\]\n]+)\n?\]';
+$NamedMacroOptionPattern{'relaxed'}='\[\n?([^\[\]\n]\n?)*\]';
 $NamedMacroOptionPattern{'restricted'}='\[(\w|[,\-\s\~\.\:\;\+\?\*\_\=])*\]';
 my $MacroOptionPattern=$NamedMacroOptionPattern{'default'};
 
@@ -2762,6 +2762,7 @@ sub flush_next_gobble_space {
     } elsif ($tex->{'line'}=~s/^([ \t\f]+)//) {
       if ($prt) {print $1;}
     }
+    if ($tex->{'line'}=~/^\%TC:/i) {return;}
     if ($tex->{'line'}=~s/^(\%+[^\r\n]*)//) {
       print_style($1,'comment');
       $ret=1;

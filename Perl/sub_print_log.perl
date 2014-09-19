@@ -45,6 +45,7 @@ sub flush_next_gobble_space {
     } elsif ($tex->{'line'}=~s/^([ \t\f]+)//) {
       if ($prt) {print $1;}
     }
+    if ($tex->{'line'}=~/^\%TC:/i) {return;}
     if ($tex->{'line'}=~s/^(\%+[^\r\n]*)//) {
       print_style($1,'comment');
       $ret=1;

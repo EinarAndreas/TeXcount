@@ -47,7 +47,7 @@ my $WordPattern; # Regex matching a word (defined in apply_language_options())
 # a macro.
 my %NamedMacroOptionPattern;
 $NamedMacroOptionPattern{'default'}='\[[^\[\]\n]*\]';
-$NamedMacroOptionPattern{'relaxed'}='\[[^\[\]\n]*(\n[^\[\]\n]+)\n?\]';
+$NamedMacroOptionPattern{'relaxed'}='\[\n?([^\[\]\n]\n?)*\]';
 $NamedMacroOptionPattern{'restricted'}='\[(\w|[,\-\s\~\.\:\;\+\?\*\_\=])*\]';
 my $MacroOptionPattern=$NamedMacroOptionPattern{'default'};
 

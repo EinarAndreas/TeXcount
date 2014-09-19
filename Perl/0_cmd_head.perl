@@ -10,10 +10,10 @@ use Term::ANSIColor;
 if ($^O=~/^MSWin/) {
   eval {
     require Win32::Console::ANSI;
-    Win32::Console::ANSI::->import();
+    import Win32::Console::ANSI;
   };
   if ($@) {
     option_ansi_colours(0);
-    print STDERR 'Package Win32::Console::ANSI required for colour coded output.';
+    print STDERR "NOTE: Package Win32::Console::ANSI required for colour coded output.\n";
   }
 }

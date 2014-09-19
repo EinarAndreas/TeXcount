@@ -10,18 +10,18 @@ use Term::ANSIColor;
 if ($^O=~/^MSWin/) {
   eval {
     require Win32::Console::ANSI;
-    Win32::Console::ANSI::->import();
+    import Win32::Console::ANSI;
   };
   if ($@) {
     option_ansi_colours(0);
-    print STDERR 'Package Win32::Console::ANSI required for colour coded output.';
+    print STDERR "NOTE: Package Win32::Console::ANSI required for colour coded output.\n";
   }
 }
 
 ##### Version information
 
-my $versionnumber="3.0.0.25";
-my $versiondate="2014 Jun 23";
+my $versionnumber="3.0.0.33";
+my $versiondate="2014 Sep 20";
 
 ###### Set global settings and variables
 
@@ -464,7 +464,7 @@ my $WordPattern; # Regex matching a word (defined in apply_language_options())
 # a macro.
 my %NamedMacroOptionPattern;
 $NamedMacroOptionPattern{'default'}='\[[^\[\]\n]*\]';
-$NamedMacroOptionPattern{'relaxed'}='\[[^\[\]\n]*(\n[^\[\]\n]+)\n?\]';
+$NamedMacroOptionPattern{'relaxed'}='\[\n?([^\[\]\n]\n?)*\]';
 $NamedMacroOptionPattern{'restricted'}='\[(\w|[,\-\s\~\.\:\;\+\?\*\_\=])*\]';
 my $MacroOptionPattern=$NamedMacroOptionPattern{'default'};
 
@@ -3121,6 +3121,7 @@ sub flush_next_gobble_space {
     } elsif ($tex->{'line'}=~s/^([ \t\f]+)//) {
       if ($prt) {print $1;}
     }
+    if ($tex->{'line'}=~/^\%TC:/i) {return;}
     if ($tex->{'line'}=~s/^(\%+[^\r\n]*)//) {
       print_style($1,'comment');
       $ret=1;
