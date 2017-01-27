@@ -25,7 +25,9 @@ D Use %TC:envir instead of %TC:group in web pages.
 
 
 ############### HISTORY ###############
-- Fixed: Failed to append .tex to filename in \include when needed.
+- Fixed: [_find_file_in_path] Correct check for when '/' should be added to path.
+- Fixed: [_parse_include_file] Failed to append .tex to filename in \include when needed.
+- Added: CMD options starting with @- will be ignored.
 - Fixed: Bug in which option file envir rules only accepted integer argument.
 - Fixed: Bug in relaxed macro option pattern.
 - Fixed: Moved ANSI import to after eval test.

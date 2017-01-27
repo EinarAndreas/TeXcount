@@ -20,7 +20,7 @@ if ($^O=~/^MSWin/) {
 
 ##### Version information
 
-my $versionnumber="3.0.0.44";
+my $versionnumber="3.0.0.51";
 my $versiondate="2017 Jan 27";
 
 ###### Set global settings and variables
@@ -1233,7 +1233,7 @@ sub _find_file_in_path {
   my $tex=shift @_;
   my $file=shift @_;
   foreach my $path (@_) {
-    if ($path!~/[\\\/]$/) {$path.='/';}
+    if ($path && $path!~/[\\\/]$/) {$path.='/';}
     my $filepath=$path.$file;
     if (-e $filepath) {return $filepath;}
     elsif ($filepath=~/\.tex$/i) {}

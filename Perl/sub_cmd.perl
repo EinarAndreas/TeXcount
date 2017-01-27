@@ -55,7 +55,7 @@ sub _find_file_in_path {
   my $tex=shift @_;
   my $file=shift @_;
   foreach my $path (@_) {
-    if ($path!~/[\\\/]$/) {$path.='/';}
+    if ($path && $path!~/[\\\/]$/) {$path.='/';}
     my $filepath=$path.$file;
     if (-e $filepath) {return $filepath;}
     elsif ($filepath=~/\.tex$/i) {}
