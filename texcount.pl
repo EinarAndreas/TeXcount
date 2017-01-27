@@ -20,8 +20,8 @@ if ($^O=~/^MSWin/) {
 
 ##### Version information
 
-my $versionnumber="3.0.0.33";
-my $versiondate="2014 Sep 20";
+my $versionnumber="3.0.0.44";
+my $versiondate="2017 Jan 27";
 
 ###### Set global settings and variables
 
@@ -921,10 +921,12 @@ sub Parse_Arguments {
   foreach my $arg (@args) {
     if (parse_option($arg)) {next;}
     if ($arg=~/^\-/) {
-      print "Invalid opton $arg \n\n";
+      print "Invalid option $arg \n\n";
       print_short_help();
       exit;
-    }
+    } elsif ($arg=~/^@\-/) { # ignored option
+      next;
+    } 
     $arg=~s/\\/\//g;
     push @files,$arg;
   }
@@ -1109,7 +1111,7 @@ sub __optionfile_tc {
   $arg=~s/^\%\s*// || return 0;
   if ($arg=~/^subst\s+(\\\w+)\s+(.*)$/i) {
     $substitutions{$1}=$2;
-  } elsif ($arg=~/^(\w+)\s+([\\]*\w+)\s+([^\s\n]+)(\s+([0-9]+))?/i) {
+  } elsif ($arg=~/^(\w+)\s+([\\]*\w+)\s+([^\s\n]+)(\s+(\-?[0-9]+|\w+))?/i) {
     tc_macro_param_option($Main,$1,$2,$3,$5) || die "Invalid TC option: $arg\n";
   } else {
     print "Invalid TC option format: $arg\n";
@@ -1231,7 +1233,7 @@ sub _find_file_in_path {
   my $tex=shift @_;
   my $file=shift @_;
   foreach my $path (@_) {
-    if (!$path=~/[\\\/]$/) {$path.='/';}
+    if ($path!~/[\\\/]$/) {$path.='/';}
     my $filepath=$path.$file;
     if (-e $filepath) {return $filepath;}
     elsif ($filepath=~/\.tex$/i) {}
@@ -1459,6 +1461,7 @@ sub tc_macro_param_option {
     return _tc_macro_set_param($tex,\%TeXfloatinc,$instr,$macro,$param);
   }
   elsif ($instr=~/^(group|envir)$/) {
+    print STDERR "LOG: TC:$instr $macro $param $option\n"; ### TEMPORARY
     if (!defined $option) {
       error($tex,'TC:'.$instr.' requires contents rule specification.');
       return 0;
@@ -2344,7 +2347,7 @@ sub _parse_include_file {
       if ($param eq 'file') {$file=$2;}
       elsif ($param eq 'texfile') {
         $file=$2;
-        if (!$file=~/\.tex$/i) {$file.='.tex';}
+        if ($file!~/\.tex$/i) {$file.='.tex';}
       }
       else {$params{$param}=$2;}
     }

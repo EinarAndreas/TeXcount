@@ -98,10 +98,12 @@ sub Parse_Arguments {
   foreach my $arg (@args) {
     if (parse_option($arg)) {next;}
     if ($arg=~/^\-/) {
-      print "Invalid opton $arg \n\n";
+      print "Invalid option $arg \n\n";
       print_short_help();
       exit;
-    }
+    } elsif ($arg=~/^@\-/) { # ignored option
+      next;
+    } 
     $arg=~s/\\/\//g;
     push @files,$arg;
   }
@@ -286,7 +288,7 @@ sub __optionfile_tc {
   $arg=~s/^\%\s*// || return 0;
   if ($arg=~/^subst\s+(\\\w+)\s+(.*)$/i) {
     $substitutions{$1}=$2;
-  } elsif ($arg=~/^(\w+)\s+([\\]*\w+)\s+([^\s\n]+)(\s+([0-9]+))?/i) {
+  } elsif ($arg=~/^(\w+)\s+([\\]*\w+)\s+([^\s\n]+)(\s+(\-?[0-9]+|\w+))?/i) {
     tc_macro_param_option($Main,$1,$2,$3,$5) || die "Invalid TC option: $arg\n";
   } else {
     print "Invalid TC option format: $arg\n";

@@ -203,6 +203,7 @@ sub tc_macro_param_option {
     return _tc_macro_set_param($tex,\%TeXfloatinc,$instr,$macro,$param);
   }
   elsif ($instr=~/^(group|envir)$/) {
+    print STDERR "LOG: TC:$instr $macro $param $option\n"; ### TEMPORARY
     if (!defined $option) {
       error($tex,'TC:'.$instr.' requires contents rule specification.');
       return 0;

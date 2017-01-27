@@ -1,8 +1,14 @@
 ################ TODO ################
+D Fix link til Quick Ref i nettsiden.
+D Referer til nettsiden og til "texdoc texcount" i hjelpeteksten.
+D Document better the use of begin{name} to count the {name} environment.
+D Use %TC:envir instead of %TC:group in web pages.
++ Implement %TC conversion rules to handle \begin{envir}.
 + Enclose paths in "..." in Parse_file_list rather than use "\ ".
 + Make sure QuickReference is included on web page.
 + Add list of macro handling rules/states to web page.
 + Implement: count characters including spaces (and punctuation?).
++ In -sum= option, use counter names (not 1+1+1 format).
 - Default inclusion of packages.
 - Add macro *-option gobbling rules for various macros.
 - Ability to subcount macro/environment content.
@@ -19,6 +25,8 @@
 
 
 ############### HISTORY ###############
+- Fixed: Failed to append .tex to filename in \include when needed.
+- Fixed: Bug in which option file envir rules only accepted integer argument.
 - Fixed: Bug in relaxed macro option pattern.
 - Fixed: Moved ANSI import to after eval test.
 - Fixed flush_next_gobble_space: Don't gobble %TC: as comment.

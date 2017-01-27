@@ -8,8 +8,8 @@ set_message('Please send information about this error to einarro@ifi.uio.no toge
 
 ##### Version information
 
-my $versionnumber="3.0.0.33";
-my $versiondate="2014 Sep 20";
+my $versionnumber="3.0.0.44";
+my $versiondate="2017 Jan 27";
 
 ###### Set global settings and variables
 
@@ -1140,6 +1140,7 @@ sub tc_macro_param_option {
     return _tc_macro_set_param($tex,\%TeXfloatinc,$instr,$macro,$param);
   }
   elsif ($instr=~/^(group|envir)$/) {
+    print STDERR "LOG: TC:$instr $macro $param $option\n"; ### TEMPORARY
     if (!defined $option) {
       error($tex,'TC:'.$instr.' requires contents rule specification.');
       return 0;
@@ -1985,7 +1986,7 @@ sub _parse_include_file {
       if ($param eq 'file') {$file=$2;}
       elsif ($param eq 'texfile') {
         $file=$2;
-        if (!$file=~/\.tex$/i) {$file.='.tex';}
+        if ($file!~/\.tex$/i) {$file.='.tex';}
       }
       else {$params{$param}=$2;}
     }

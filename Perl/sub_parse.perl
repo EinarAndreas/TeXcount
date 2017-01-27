@@ -365,7 +365,7 @@ sub _parse_include_file {
       if ($param eq 'file') {$file=$2;}
       elsif ($param eq 'texfile') {
         $file=$2;
-        if (!$file=~/\.tex$/i) {$file.='.tex';}
+        if ($file!~/\.tex$/i) {$file.='.tex';}
       }
       else {$params{$param}=$2;}
     }
