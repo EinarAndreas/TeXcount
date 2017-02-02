@@ -1,7 +1,10 @@
 ### Macros indicating package inclusion
-# Will always be assumed to take one parameter (plus options).
+# Will always be assumed to take one extra parameter which is the list of
+# packages. Macro handling rule indicates parameters ignored prior to that.
 # Gets added to TeXmacro. After that, values are not used, only membership.
-my %TeXpackageinc=('\usepackage'=>1,'\RequirePackage'=>1);
+# Handling is otherwise hard-coded rather than rule based.
+my %TeXpackageinc;
+add_keys_to_hash(\%TeXpackageinc,['[','ignore','specialargument'],'\usepackage','\RequirePackage');
 
 ### Macros that are counted within the preamble
 # The preamble is the text between \documentclass and \begin{document}.
@@ -139,6 +142,7 @@ my %TeXfileinclude=('\input'=>'input','\include'=>'texfile');
 
 ### Convert state keys to codes
 convert_hash(\%TeXpreamble,\&keyarray_to_state);
+convert_hash(\%TeXpackageinc,\&keyarray_to_state);
 convert_hash(\%TeXfloatinc,\&keyarray_to_state);
 convert_hash(\%TeXmacro,\&keyarray_to_state);
 convert_hash(\%TeXmacrocount,\&keyarray_to_cnt);

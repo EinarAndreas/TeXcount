@@ -18,6 +18,8 @@ body {width:auto;padding:5;margin:5;}
 .mathcmd {color: #6c0;}
 .ignore {color: #999;}
 .exclenv {color:#c66;}
+.special {color:#c66; font-weight: bold;}
+.specarg {color:#c66; font-weight: bold; font-style: italic;}
 .tc {color: #999; font-weight:bold;}
 .comment {color: #999; font-style: italic;}
 .state {color: #990; font-size: 70%;}

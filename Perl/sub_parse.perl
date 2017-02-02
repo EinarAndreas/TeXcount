@@ -40,11 +40,12 @@ sub _parse_unit {
     $simple_token=1;
   }
   my $next;
+  my @specarg;
   while (defined ($next=next_token($tex,$simple_token))) {
     # Parse next token until token matches $end
     set_style($tex,'ignore');
     if ($state==$STATE_MATH) {set_style($tex,'math');}
-    if ((defined $end) && ($end eq $next)) {return;}
+    if ((defined $end) && ($end eq $next)) {return @specarg;}
     # Determine how token should be interpreted
     if ($state==$STATE_PREAMBLE && $next eq '\begin' && $tex->{'line'}=~/^\{\s*document\s*\}/) {
       # \begin{document}
@@ -56,9 +57,19 @@ sub _parse_unit {
     } elsif ($tex->{'type'}==$TOKEN_SPACE) {
       # space or other code that should be passed through without styling
       flush_next($tex,' ');
+    } elsif ($next eq '{') {
+      # {...} group
+      set_style($tex,'ignore');
+      push @specarg,_parse_unit($tex,$state,'}');
+      set_style($tex,'ignore');
+    } elsif ($next eq '}') {
+      error($tex,'Encountered } without corresponding {.');
     } elsif ($tex->{'type'}==$TOKEN_TC) {
       # parse TC instructions
       _parse_tc($tex,$next);
+    } elsif ($state==$STATE_SPECIAL_ARGUMENT) {
+      set_style($tex,'specarg');
+      push @specarg,$next;
     } elsif ($tex->{'type'}==$TOKEN_WORD) {
       # word
       if (my $cnt=state_text_cnt($state)) {
@@ -66,13 +77,6 @@ sub _parse_unit {
         inc_count($tex,$cnt);
         set_style($tex,state_to_style($state));
       }
-    } elsif ($next eq '{') {
-      # {...} group
-      set_style($tex,'ignore');
-      _parse_unit($tex,$state,'}');
-      set_style($tex,'ignore');
-    } elsif ($next eq '}') {
-      error($tex,'Encountered } without corresponding {.');
     } elsif ($state==$STATE_EXCLUDE_STRONGER) {
       # ignore remaining tokens
       set_style($tex,'ignore');
@@ -81,7 +85,7 @@ sub _parse_unit {
       set_style($tex,'document');
       _parse_documentclass_params($tex);
       while (!($tex->{'eof'})) {
-        _parse_unit($tex,$STATE_PREAMBLE);
+        push @specarg,_parse_unit($tex,$STATE_PREAMBLE);
       }
     } elsif ($tex->{'type'}==$TOKEN_MACRO) {
       # macro call
@@ -100,9 +104,10 @@ sub _parse_unit {
       # handle as parameter that should not be counted
       set_style($tex,'ignore');
     }
-    if (!defined $end) {return;}
+    if (!defined $end) {return @specarg;}
   }
   defined $end && error($tex,'Reached end of file while waiting for '.$end.'.');
+  return @specarg;
 }
 
 # Print state
@@ -130,6 +135,7 @@ sub _parse_macro {
     next_subcount($tex,$label);
   }
   if ($state==$STATE_MATH) {set_style($tex,'mathcmd');}
+  elsif ($state==$STATE_SPECIAL_ARGUMENT) {set_style($tex,'specarg');}
   else {set_style($tex,state_is_text($state)?'cmd':'exclcmd');}
   if ($next eq '\begin' && state_inc_envir($state)) {
     _parse_envir($tex,$state);
@@ -139,8 +145,10 @@ sub _parse_macro {
     push @macro,$STRING_ERROR;
   } elsif ($next eq '\verb') {
     _parse_verb_region($tex,$state);
-  } elsif (state_is_parsed($state) && defined $TeXpackageinc{$next} ) {
-    _parse_include_package($tex);
+  } elsif (state_is_parsed($state) && defined (my $substat=$TeXpackageinc{$next})) {
+    # Parse macro parameters, use _parse_include_argument to process package list
+    set_style($tex,'document');
+  	push @macro,__gobble_macro_parms($tex,$substat,$__STATE_NULL,\&_parse_include_argument);
     push @macro,'<package>';
   } elsif (state_is_parsed($state) && defined (my $def=$TeXfileinclude{$next})) {
     # include file (merge in or queue up for parsing)
@@ -392,7 +400,6 @@ sub _parse_include_bbl {
 sub _parse_include_package {
   my ($tex)=@_;
   set_style($tex,'document');
-  __gobble_option($tex);
   if ( $tex->{'line'}=~s/^\{(([\w\-]+)(\s*,\s*[\w\-]+)*)\}// ) {
     print_style("{$1}",'document');
     foreach (split(/\s*,\s*/,$1)) {
@@ -402,6 +409,17 @@ sub _parse_include_package {
   } else {
     _parse_unit($tex,$STATE_IGNORE);
     error($tex,'Could not recognise package list, ignoring it instead.');
+  }
+}
+
+# Extract package names from token list and include packages
+sub _parse_include_argument {
+  my $tex=shift @_;
+  my $args=join('',@_);
+  set_style($tex,'document');
+  foreach (split(/\s*,\s*/,$args)) {
+    $MacroUsage{"<package:$_>"}++;
+    include_package($_,$tex);
   }
 }
 
@@ -473,7 +491,7 @@ sub __gobble_macro_modifier {
 
 # Gobble macro parameters as specified in parm plus options
 sub __gobble_macro_parms {
-  my ($tex,$parm,$oldstat)=@_;
+  my ($tex,$parm,$oldstat,$specarghandler)=@_;
   my $n;
   my @ret;
   if (ref($parm) eq 'ARRAY') {
@@ -505,7 +523,10 @@ sub __gobble_macro_parms {
       # Parse macro parameter
       if ($auto_gobble_options) {push @ret,__gobble_options($tex);}
       push @ret,$STRING_PARAMETER;
-      _parse_unit($tex,__new_state($p,$oldstat),$_PARAM_);
+      my @specarg=_parse_unit($tex,__new_state($p,$oldstat),$_PARAM_);
+      if ($p==$STATE_SPECIAL_ARGUMENT && defined $specarghandler) {
+        &$specarghandler($tex,@specarg);
+      }
     }
   }
   #TODO: Drop default gobbling of option at end?

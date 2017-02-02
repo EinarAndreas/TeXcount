@@ -86,6 +86,7 @@ my $STATE_FLOAT=-10;
 my $STATE_EXCLUDE_STRONG=-20;
 my $STATE_EXCLUDE_STRONGER=-30;
 my $STATE_EXCLUDE_ALL=-40;
+my $STATE_SPECIAL_ARGUMENT=-90;
 my $STATE_PREAMBLE=-99;
 my $STATE_TEXT=1;
 my $STATE_TEXT_HEADER=2;
@@ -116,6 +117,7 @@ add_keys_to_hash(\%key2state,$STATE_FLOAT,-1,'isfloat');
 add_keys_to_hash(\%key2state,$STATE_EXCLUDE_STRONG,-2,'xx');
 add_keys_to_hash(\%key2state,$STATE_EXCLUDE_STRONGER,-3,'xxx');
 add_keys_to_hash(\%key2state,$STATE_EXCLUDE_ALL,-4,'xall');
+add_keys_to_hash(\%key2state,$STATE_SPECIAL_ARGUMENT,'specarg','spescialarg','specialargument');
 add_keys_to_hash(\%key2state,$_STATE_OPTION,'[',' option',' opt',' optional');
 add_keys_to_hash(\%key2state,$_STATE_NOOPTION,'nooption','nooptions','noopt','noopts');
 add_keys_to_hash(\%key2state,$_STATE_AUTOOPTION,'autooption','autooptions','autoopt','autoopts');
@@ -125,6 +127,7 @@ my @STATE_FIRST_PRIORITY=(
     $STATE_EXCLUDE_ALL,
     $STATE_EXCLUDE_STRONGER,
     $STATE_EXCLUDE_STRONG,
+    $STATE_SPECIAL_ARGUMENT,
     $STATE_FLOAT,
     $STATE_MATH,
     $STATE_IGNORE,

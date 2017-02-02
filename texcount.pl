@@ -20,8 +20,8 @@ if ($^O=~/^MSWin/) {
 
 ##### Version information
 
-my $versionnumber="3.0.0.51";
-my $versiondate="2017 Jan 27";
+my $versionnumber="3.0.0.88";
+my $versiondate="2017 Feb 02";
 
 ###### Set global settings and variables
 
@@ -211,6 +211,7 @@ my $STATE_FLOAT=-10;
 my $STATE_EXCLUDE_STRONG=-20;
 my $STATE_EXCLUDE_STRONGER=-30;
 my $STATE_EXCLUDE_ALL=-40;
+my $STATE_SPECIAL_ARGUMENT=-90;
 my $STATE_PREAMBLE=-99;
 my $STATE_TEXT=1;
 my $STATE_TEXT_HEADER=2;
@@ -241,6 +242,7 @@ add_keys_to_hash(\%key2state,$STATE_FLOAT,-1,'isfloat');
 add_keys_to_hash(\%key2state,$STATE_EXCLUDE_STRONG,-2,'xx');
 add_keys_to_hash(\%key2state,$STATE_EXCLUDE_STRONGER,-3,'xxx');
 add_keys_to_hash(\%key2state,$STATE_EXCLUDE_ALL,-4,'xall');
+add_keys_to_hash(\%key2state,$STATE_SPECIAL_ARGUMENT,'specarg','spescialarg','specialargument');
 add_keys_to_hash(\%key2state,$_STATE_OPTION,'[',' option',' opt',' optional');
 add_keys_to_hash(\%key2state,$_STATE_NOOPTION,'nooption','nooptions','noopt','noopts');
 add_keys_to_hash(\%key2state,$_STATE_AUTOOPTION,'autooption','autooptions','autoopt','autoopts');
@@ -250,6 +252,7 @@ my @STATE_FIRST_PRIORITY=(
     $STATE_EXCLUDE_ALL,
     $STATE_EXCLUDE_STRONGER,
     $STATE_EXCLUDE_STRONG,
+    $STATE_SPECIAL_ARGUMENT,
     $STATE_FLOAT,
     $STATE_MATH,
     $STATE_IGNORE,
@@ -385,11 +388,11 @@ my $STYLE_BLOCK='-';
 my $NOSTYLE=' ';
 $STYLES{'Errors'}={'error'=>'bold red'};
 $STYLES{'Words'}={'word'=>'blue','hword'=>'bold blue','oword'=>'blue','altwd'=>'blue'};
-$STYLES{'Macros'}={'cmd'=>'green','fileinc'=>'bold green'};
+$STYLES{'Macros'}={'cmd'=>'green','fileinc'=>'bold green','special'=>'bold red','specarg'=>'red'};
 $STYLES{'Options'}={'option'=>'yellow','optparm'=>'green'};
 $STYLES{'Ignored'}={'ignore'=>'cyan','math'=>'magenta'};
 $STYLES{'Excluded'}={'exclcmd'=>'yellow','exclenv'=>'yellow','exclmath'=>'yellow','mathcmd'=>'yellow'};
-$STYLES{'Groups'}={'document'=>'red','envir'=>'red','mathgroup'=>'magenta'};
+$STYLES{'Groups'}={'document'=>'bold red','envir'=>'red','mathgroup'=>'magenta'};
 $STYLES{'Comments'}={'tc'=>'bold yellow','comment'=>'yellow'};
 $STYLES{'Sums'}={'cumsum'=>'yellow'};
 $STYLES{'States'}={'state'=>'cyan underline'};
@@ -403,7 +406,8 @@ $STYLES{'All'}=$STYLES{4};
 my %STYLE=%{$STYLES{$defaultVerbosity}};
 
 my @STYLE_LIST=('error','word','hword','oword','altwd',
-  'ignore','document','cmd','exclcmd','option','optparm','envir','exclenv',
+  'ignore','document','special','cmd','exclcmd',
+  'option','optparm','envir','exclenv','specarg',
   'mathgroup','exclmath','math','mathcmd','comment','tc','fileinc','state','cumsum');
 my %STYLE_DESC=(
   'error'       => 'ERROR: TeXcount error message',
@@ -413,10 +417,12 @@ my %STYLE_DESC=(
   'altwd'       => 'Words in user specified counters: counted in separate counters',
   'ignore'      => 'Ignored text or code: excluded or ignored',
   'document'    => '\documentclass: document start, beginning of preamble',
+  'special'     => 'Special macros, eg require special handling or have side-effects',
   'cmd'         => '\macro: macro not counted, but parameters may be',
   'exclcmd'     => '\macro: macro in excluded region',
   'option'      => '[Macro options]: not counted',
   'optparm'     => '[Optional parameter]: content parsed and styled as counted',
+  'specarg'     => 'Special argument, eg with side-effects',
   'envir'       => '\begin{name}  \end{name}: environment',
   'exclenv'     => '\begin{name}  \end{name}: environment in excluded region',
   'mathgroup'   => '$  $: counted as one equation',
@@ -543,9 +549,12 @@ END
 ###### Define core rules
 
 ### Macros indicating package inclusion
-# Will always be assumed to take one parameter (plus options).
+# Will always be assumed to take one extra parameter which is the list of
+# packages. Macro handling rule indicates parameters ignored prior to that.
 # Gets added to TeXmacro. After that, values are not used, only membership.
-my %TeXpackageinc=('\usepackage'=>1,'\RequirePackage'=>1);
+# Handling is otherwise hard-coded rather than rule based.
+my %TeXpackageinc;
+add_keys_to_hash(\%TeXpackageinc,['[','ignore','specialargument'],'\usepackage','\RequirePackage');
 
 ### Macros that are counted within the preamble
 # The preamble is the text between \documentclass and \begin{document}.
@@ -683,6 +692,7 @@ my %TeXfileinclude=('\input'=>'input','\include'=>'texfile');
 
 ### Convert state keys to codes
 convert_hash(\%TeXpreamble,\&keyarray_to_state);
+convert_hash(\%TeXpackageinc,\&keyarray_to_state);
 convert_hash(\%TeXfloatinc,\&keyarray_to_state);
 convert_hash(\%TeXmacro,\&keyarray_to_state);
 convert_hash(\%TeXmacrocount,\&keyarray_to_cnt);
@@ -881,35 +891,37 @@ sub Initialise {
 # Check arguments, exit on exit condition
 sub Check_Arguments {
   my @args=@_;
-  my $arg=$args[0];
   if (!@args) {
     print_version();
     print_short_help();
     exit;
-  } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))$/) {
-    print_help();
-    exit;
-  } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))=(.*)$/) {
-    print_help_on_rule($4);
-    exit;
-  } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(opt|options?)$/) {
-    print_syntax();
-    exit;
-  } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(opt|options?)=(.*)$/) {
-    print_syntax_subset($5);
-    exit;
-  } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(styles?)$/) {
-    print_help_on_styles();
-    exit;
-  } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(styles?)=(\w+)$/) {
-    print_help_on_styles($5);
-    exit;
-  } elsif ($arg=~/^--?(ver|version)$/) {
-    print_version();
-    exit;
-  } elsif ($arg=~/^--?(lic|license|licence)$/) {
-    print_license();
-    exit;
+  }
+  for my $arg (@args) {
+    if ($arg=~/^(--?(h|\?|help)|\/(\?|h))$/) {
+      print_help();
+      exit;
+    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))=(.*)$/) {
+      print_help_on_rule($4);
+      exit;
+    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(opt|options?)$/) {
+      print_syntax();
+      exit;
+    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(opt|options?)=(.*)$/) {
+      print_syntax_subset($5);
+      exit;
+    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(styles?)$/) {
+      print_help_on_styles();
+      exit;
+    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(styles?)=(\w+)$/) {
+      print_help_on_styles($5);
+      exit;
+    } elsif ($arg=~/^--?(ver|version)$/) {
+      print_version();
+      exit;
+    } elsif ($arg=~/^--?(lic|license|licence)$/) {
+      print_license();
+      exit;
+    }
   }
   return 1;
 }
@@ -1047,7 +1059,10 @@ sub parse_options_output {
   elsif ($arg eq '-nover') {$showVersion=-1;}
   elsif ($arg =~/^-nosep(arator)?s?$/ ) {$separator='';}
   elsif ($arg =~/^-sep(arator)?s?=(.*)$/ ) {$separator=$2;}
-  elsif ($arg =~/^-out=(.*)/ ) {close STDOUT; open STDOUT,'>',$1;}
+  elsif ($arg =~/^-out=(.*)/ ) {
+    close STDOUT;
+    open STDOUT,'>',$1 or die "Could not open out file for writing: $1";
+  }
   elsif ($arg =~/^-out-stderr/ ) {select STDERR;}
   else {return 0;}
   return 1;
@@ -1461,7 +1476,6 @@ sub tc_macro_param_option {
     return _tc_macro_set_param($tex,\%TeXfloatinc,$instr,$macro,$param);
   }
   elsif ($instr=~/^(group|envir)$/) {
-    print STDERR "LOG: TC:$instr $macro $param $option\n"; ### TEMPORARY
     if (!defined $option) {
       error($tex,'TC:'.$instr.' requires contents rule specification.');
       return 0;
@@ -2022,11 +2036,12 @@ sub _parse_unit {
     $simple_token=1;
   }
   my $next;
+  my @specarg;
   while (defined ($next=next_token($tex,$simple_token))) {
     # Parse next token until token matches $end
     set_style($tex,'ignore');
     if ($state==$STATE_MATH) {set_style($tex,'math');}
-    if ((defined $end) && ($end eq $next)) {return;}
+    if ((defined $end) && ($end eq $next)) {return @specarg;}
     # Determine how token should be interpreted
     if ($state==$STATE_PREAMBLE && $next eq '\begin' && $tex->{'line'}=~/^\{\s*document\s*\}/) {
       # \begin{document}
@@ -2038,9 +2053,19 @@ sub _parse_unit {
     } elsif ($tex->{'type'}==$TOKEN_SPACE) {
       # space or other code that should be passed through without styling
       flush_next($tex,' ');
+    } elsif ($next eq '{') {
+      # {...} group
+      set_style($tex,'ignore');
+      push @specarg,_parse_unit($tex,$state,'}');
+      set_style($tex,'ignore');
+    } elsif ($next eq '}') {
+      error($tex,'Encountered } without corresponding {.');
     } elsif ($tex->{'type'}==$TOKEN_TC) {
       # parse TC instructions
       _parse_tc($tex,$next);
+    } elsif ($state==$STATE_SPECIAL_ARGUMENT) {
+      set_style($tex,'specarg');
+      push @specarg,$next;
     } elsif ($tex->{'type'}==$TOKEN_WORD) {
       # word
       if (my $cnt=state_text_cnt($state)) {
@@ -2048,13 +2073,6 @@ sub _parse_unit {
         inc_count($tex,$cnt);
         set_style($tex,state_to_style($state));
       }
-    } elsif ($next eq '{') {
-      # {...} group
-      set_style($tex,'ignore');
-      _parse_unit($tex,$state,'}');
-      set_style($tex,'ignore');
-    } elsif ($next eq '}') {
-      error($tex,'Encountered } without corresponding {.');
     } elsif ($state==$STATE_EXCLUDE_STRONGER) {
       # ignore remaining tokens
       set_style($tex,'ignore');
@@ -2063,7 +2081,7 @@ sub _parse_unit {
       set_style($tex,'document');
       _parse_documentclass_params($tex);
       while (!($tex->{'eof'})) {
-        _parse_unit($tex,$STATE_PREAMBLE);
+        push @specarg,_parse_unit($tex,$STATE_PREAMBLE);
       }
     } elsif ($tex->{'type'}==$TOKEN_MACRO) {
       # macro call
@@ -2082,9 +2100,10 @@ sub _parse_unit {
       # handle as parameter that should not be counted
       set_style($tex,'ignore');
     }
-    if (!defined $end) {return;}
+    if (!defined $end) {return @specarg;}
   }
   defined $end && error($tex,'Reached end of file while waiting for '.$end.'.');
+  return @specarg;
 }
 
 # Print state
@@ -2112,6 +2131,7 @@ sub _parse_macro {
     next_subcount($tex,$label);
   }
   if ($state==$STATE_MATH) {set_style($tex,'mathcmd');}
+  elsif ($state==$STATE_SPECIAL_ARGUMENT) {set_style($tex,'specarg');}
   else {set_style($tex,state_is_text($state)?'cmd':'exclcmd');}
   if ($next eq '\begin' && state_inc_envir($state)) {
     _parse_envir($tex,$state);
@@ -2121,8 +2141,10 @@ sub _parse_macro {
     push @macro,$STRING_ERROR;
   } elsif ($next eq '\verb') {
     _parse_verb_region($tex,$state);
-  } elsif (state_is_parsed($state) && defined $TeXpackageinc{$next} ) {
-    _parse_include_package($tex);
+  } elsif (state_is_parsed($state) && defined (my $substat=$TeXpackageinc{$next})) {
+    # Parse macro parameters, use _parse_include_argument to process package list
+    set_style($tex,'document');
+  	push @macro,__gobble_macro_parms($tex,$substat,$__STATE_NULL,\&_parse_include_argument);
     push @macro,'<package>';
   } elsif (state_is_parsed($state) && defined (my $def=$TeXfileinclude{$next})) {
     # include file (merge in or queue up for parsing)
@@ -2374,7 +2396,6 @@ sub _parse_include_bbl {
 sub _parse_include_package {
   my ($tex)=@_;
   set_style($tex,'document');
-  __gobble_option($tex);
   if ( $tex->{'line'}=~s/^\{(([\w\-]+)(\s*,\s*[\w\-]+)*)\}// ) {
     print_style("{$1}",'document');
     foreach (split(/\s*,\s*/,$1)) {
@@ -2384,6 +2405,17 @@ sub _parse_include_package {
   } else {
     _parse_unit($tex,$STATE_IGNORE);
     error($tex,'Could not recognise package list, ignoring it instead.');
+  }
+}
+
+# Extract package names from token list and include packages
+sub _parse_include_argument {
+  my $tex=shift @_;
+  my $args=join('',@_);
+  set_style($tex,'document');
+  foreach (split(/\s*,\s*/,$args)) {
+    $MacroUsage{"<package:$_>"}++;
+    include_package($_,$tex);
   }
 }
 
@@ -2455,7 +2487,7 @@ sub __gobble_macro_modifier {
 
 # Gobble macro parameters as specified in parm plus options
 sub __gobble_macro_parms {
-  my ($tex,$parm,$oldstat)=@_;
+  my ($tex,$parm,$oldstat,$specarghandler)=@_;
   my $n;
   my @ret;
   if (ref($parm) eq 'ARRAY') {
@@ -2487,7 +2519,10 @@ sub __gobble_macro_parms {
       # Parse macro parameter
       if ($auto_gobble_options) {push @ret,__gobble_options($tex);}
       push @ret,$STRING_PARAMETER;
-      _parse_unit($tex,__new_state($p,$oldstat),$_PARAM_);
+      my @specarg=_parse_unit($tex,__new_state($p,$oldstat),$_PARAM_);
+      if ($p==$STATE_SPECIAL_ARGUMENT && defined $specarghandler) {
+        &$specarghandler($tex,@specarg);
+      }
     }
   }
   #TODO: Drop default gobbling of option at end?
@@ -3495,6 +3530,8 @@ body {width:auto;padding:5;margin:5;}
 .mathcmd {color: #6c0;}
 .ignore {color: #999;}
 .exclenv {color:#c66;}
+.special {color:#c66; font-weight: bold;}
+.specarg {color:#c66; font-weight: bold; font-style: italic;}
 .tc {color: #999; font-weight:bold;}
 .comment {color: #999; font-style: italic;}
 .state {color: #990; font-size: 70%;}

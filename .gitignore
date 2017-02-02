@@ -2,6 +2,7 @@
 .*
 !.gitignore
 _*
+*.zip
 
 ## PSPad project file
 *.ppr

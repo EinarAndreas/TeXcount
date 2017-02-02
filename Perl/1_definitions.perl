@@ -25,11 +25,11 @@ my $STYLE_BLOCK='-';
 my $NOSTYLE=' ';
 $STYLES{'Errors'}={'error'=>'bold red'};
 $STYLES{'Words'}={'word'=>'blue','hword'=>'bold blue','oword'=>'blue','altwd'=>'blue'};
-$STYLES{'Macros'}={'cmd'=>'green','fileinc'=>'bold green'};
+$STYLES{'Macros'}={'cmd'=>'green','fileinc'=>'bold green','special'=>'bold red','specarg'=>'red'};
 $STYLES{'Options'}={'option'=>'yellow','optparm'=>'green'};
 $STYLES{'Ignored'}={'ignore'=>'cyan','math'=>'magenta'};
 $STYLES{'Excluded'}={'exclcmd'=>'yellow','exclenv'=>'yellow','exclmath'=>'yellow','mathcmd'=>'yellow'};
-$STYLES{'Groups'}={'document'=>'red','envir'=>'red','mathgroup'=>'magenta'};
+$STYLES{'Groups'}={'document'=>'bold red','envir'=>'red','mathgroup'=>'magenta'};
 $STYLES{'Comments'}={'tc'=>'bold yellow','comment'=>'yellow'};
 $STYLES{'Sums'}={'cumsum'=>'yellow'};
 $STYLES{'States'}={'state'=>'cyan underline'};
@@ -43,7 +43,8 @@ $STYLES{'All'}=$STYLES{4};
 my %STYLE=%{$STYLES{$defaultVerbosity}};
 
 my @STYLE_LIST=('error','word','hword','oword','altwd',
-  'ignore','document','cmd','exclcmd','option','optparm','envir','exclenv',
+  'ignore','document','special','cmd','exclcmd',
+  'option','optparm','envir','exclenv','specarg',
   'mathgroup','exclmath','math','mathcmd','comment','tc','fileinc','state','cumsum');
 my %STYLE_DESC=(
   'error'       => 'ERROR: TeXcount error message',
@@ -53,10 +54,12 @@ my %STYLE_DESC=(
   'altwd'       => 'Words in user specified counters: counted in separate counters',
   'ignore'      => 'Ignored text or code: excluded or ignored',
   'document'    => '\documentclass: document start, beginning of preamble',
+  'special'     => 'Special macros, eg require special handling or have side-effects',
   'cmd'         => '\macro: macro not counted, but parameters may be',
   'exclcmd'     => '\macro: macro in excluded region',
   'option'      => '[Macro options]: not counted',
   'optparm'     => '[Optional parameter]: content parsed and styled as counted',
+  'specarg'     => 'Special argument, eg with side-effects',
   'envir'       => '\begin{name}  \end{name}: environment',
   'exclenv'     => '\begin{name}  \end{name}: environment in excluded region',
   'mathgroup'   => '$  $: counted as one equation',

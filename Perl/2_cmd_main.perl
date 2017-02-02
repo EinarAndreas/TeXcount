@@ -58,35 +58,37 @@ sub Initialise {
 # Check arguments, exit on exit condition
 sub Check_Arguments {
   my @args=@_;
-  my $arg=$args[0];
   if (!@args) {
     print_version();
     print_short_help();
     exit;
-  } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))$/) {
-    print_help();
-    exit;
-  } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))=(.*)$/) {
-    print_help_on_rule($4);
-    exit;
-  } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(opt|options?)$/) {
-    print_syntax();
-    exit;
-  } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(opt|options?)=(.*)$/) {
-    print_syntax_subset($5);
-    exit;
-  } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(styles?)$/) {
-    print_help_on_styles();
-    exit;
-  } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(styles?)=(\w+)$/) {
-    print_help_on_styles($5);
-    exit;
-  } elsif ($arg=~/^--?(ver|version)$/) {
-    print_version();
-    exit;
-  } elsif ($arg=~/^--?(lic|license|licence)$/) {
-    print_license();
-    exit;
+  }
+  for my $arg (@args) {
+    if ($arg=~/^(--?(h|\?|help)|\/(\?|h))$/) {
+      print_help();
+      exit;
+    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))=(.*)$/) {
+      print_help_on_rule($4);
+      exit;
+    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(opt|options?)$/) {
+      print_syntax();
+      exit;
+    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(opt|options?)=(.*)$/) {
+      print_syntax_subset($5);
+      exit;
+    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(styles?)$/) {
+      print_help_on_styles();
+      exit;
+    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(styles?)=(\w+)$/) {
+      print_help_on_styles($5);
+      exit;
+    } elsif ($arg=~/^--?(ver|version)$/) {
+      print_version();
+      exit;
+    } elsif ($arg=~/^--?(lic|license|licence)$/) {
+      print_license();
+      exit;
+    }
   }
   return 1;
 }
@@ -224,7 +226,10 @@ sub parse_options_output {
   elsif ($arg eq '-nover') {$showVersion=-1;}
   elsif ($arg =~/^-nosep(arator)?s?$/ ) {$separator='';}
   elsif ($arg =~/^-sep(arator)?s?=(.*)$/ ) {$separator=$2;}
-  elsif ($arg =~/^-out=(.*)/ ) {close STDOUT; open STDOUT,'>',$1;}
+  elsif ($arg =~/^-out=(.*)/ ) {
+    close STDOUT;
+    open STDOUT,'>',$1 or die "Could not open out file for writing: $1";
+  }
   elsif ($arg =~/^-out-stderr/ ) {select STDERR;}
   else {return 0;}
   return 1;
