@@ -1,14 +1,10 @@
 ################ TODO ################
 # +=important, -=medium, ?=maybe, H=help, D=documentation, W=web
-H Referer til nettsiden og til "texdoc texcount" i hjelpeteksten.
 D Document better the use of begin{name} to count the {name} environment.
-+ Modify TeXcount help so initial help is short, details through help suboptions.
 + Implement %TC conversion rules to handle \begin{envir}.
-+ Enclose paths in "..." in Parse_file_list rather than use "\ ".
 W Make sure QuickReference is included on web page.
-W Add list of macro handling rules/states to web page.
 + Implement: count characters including spaces (and punctuation?).
-+ In -sum= option, use counter names (not 1+1+1 format).
++ In -sum= option, use counter names (not 1,1,1 format).
 - Default inclusion of packages.
 - Add macro *-option gobbling rules for various macros.
 - Ability to subcount macro/environment content.
@@ -25,6 +21,13 @@ W Add list of macro handling rules/states to web page.
 
 
 ############### HISTORY ###############
+- Refer to web page and "texdoc texcount" in -help text.
+- Modify TeXcount help so initial help is short, details through help suboptions.
+- Fixed: Prevent repeated replacement of {{counter}} in templates.
+- Fixed: Enclose paths in "..." in Parse_file_list rather than use "\ ".
+- Added: May use -option:value instead of -option=value.
+- Added: Show state acronym instead of number with -showstates.
+- Added: List of macro handling rules/states added to web page.
 - Use %TC:envir instead of %TC:group in web pages.
 - Fixed: Parse \usepackage etc as rest of text to handle option and argument better.
 - Added: Support for special arguments that are returned to TeXcount for processing.

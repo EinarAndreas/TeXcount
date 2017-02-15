@@ -113,7 +113,7 @@ sub _parse_unit {
 # Print state
 sub _set_printstate {
   my ($tex,$state,$end)=@_;
-  $tex->{'printstate'}=':'.state_to_text($state).':'.(defined $end?$end.':':'');
+  $tex->{'printstate'}=':'.state_to_text($state).(defined $end?'>'.$end:'').':';
   flush_next($tex);
 }
 

@@ -126,6 +126,7 @@ sub __print_count_using_template {
   $template=__process_template($template,'SUM',get_sum_count($count));
   $template=__process_template($template,'TITLE',$count->{'title'}||'');
   $template=__process_template($template,'SUB',number_of_subcounts($count));
+  $template=~s/\a//gis;
   print $template;
 }
 
@@ -150,7 +151,7 @@ sub __process_template {
     $template=~s/\{($label)\?(.*?)\?(\1)\}//gis;
   }
   if (!defined $value) {$value='';}
-  $template=~s/\{($label)\}/$value/gis;
+  $template=~s/\{($label)\}/$value\a/gis;
   return $template;
 }
 

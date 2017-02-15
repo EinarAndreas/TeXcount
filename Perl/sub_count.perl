@@ -55,7 +55,11 @@ sub get_sum_count {
   my $count=shift @_;
   my $sum=0;
   for (my $i=scalar(@sumweights);$i-->1;) {
-    $sum+=get_count($count,$i)*$sumweights[$i];
+    if ($sumweights[$i]) {
+      #DEBUG: print "Count($i) = ",get_count($count,$i),"\n";
+      #DEBUG: print "Weight($i) = ",$sumweights[$i],"\n";	
+      $sum+=get_count($count,$i)*$sumweights[$i];
+    }
   }
   return $sum;
 }

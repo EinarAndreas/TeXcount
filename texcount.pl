@@ -20,8 +20,8 @@ if ($^O=~/^MSWin/) {
 
 ##### Version information
 
-my $versionnumber="3.0.0.88";
-my $versiondate="2017 Feb 02";
+my $versionnumber="3.0.0.168";
+my $versiondate="2017 Feb 15";
 
 ###### Set global settings and variables
 
@@ -289,6 +289,7 @@ my %state2desc=(
     $STATE_EXCLUDE_STRONGER => 'stronger exclude: ignore environments and macro paramters',
     $STATE_EXCLUDE_ALL      => 'exlude all: even {, only scan for end marker',
     $STATE_PREAMBLE         => 'preamble: from \documentclass to \begin{document}',
+    $STATE_SPECIAL_ARGUMENT => 'special macro argument that TeXcount may process further',
     $STATE_TEXT             => 'text: count words',
     $STATE_TEXT_HEADER      => 'header text: count words as header words',
     $STATE_TEXT_FLOAT       => 'float text: count words as float words (e.g. captions)',
@@ -296,6 +297,13 @@ my %state2desc=(
     $STATE_TO_FLOAT         => 'float: count float, then count words as float/other words',
     $STATE_TO_INLINEMATH    => 'inline math: count as inline math/equation',
     $STATE_TO_DISPLAYMATH   => 'displayed math: count as displayed math/equation');
+
+# Short state name for each state for use with -showstates
+my %state2key = ($STATE_PREAMBLE=>'pre');
+for my $key ('x','xx','xxx','xall','w','hw','ow','eq','ds',
+        'head','float','isfloat','ismath','specarg') {
+  $state2key{$key2state{$key}}=$key;
+}
 
 # Parsing state presentation style
 my %state2style=(
@@ -338,6 +346,8 @@ sub state_inc_envir {
 # TODO: Should do a conversion based on STATE values.
 sub state_to_text {
   my $st=shift @_;
+  my $statename = $state2key{$st};
+  if (defined $statename) {$st=$statename;}
   return $st;
 }
 
@@ -358,6 +368,7 @@ sub add_new_counter {
   push @countdesc,$desc;
   if (defined $sumweights[$like]) {$sumweights[$cnt]=$sumweights[$like];}
   $key2state{$key}=$state;
+  $state2key{$state}=$key;
   $state2cnt{$state}=$cnt;
   $state2style{$state}='altwd';
   push @STATE_MID_PRIORITY,$state;
@@ -897,23 +908,28 @@ sub Check_Arguments {
     exit;
   }
   for my $arg (@args) {
-    if ($arg=~/^(--?(h|\?|help)|\/(\?|h))$/) {
+    $arg=~s/^(--?(h|\?|help)|\/(\?|h))\b/-h/;
+    $arg=~s/[=:]/=/;
+    if ($arg=~/^-h$/) {
+      print_short_help();
+      exit;
+    } elsif ($arg=~/^-h=(.*)$/) {
+      print_help_on_rule($1);
+      exit;
+    } elsif ($arg=~/^-(h-)?(man|manual)$/) {
       print_help();
       exit;
-    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))=(.*)$/) {
-      print_help_on_rule($4);
-      exit;
-    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(opt|options?)$/) {
+    } elsif ($arg=~/^-h-?(opt|options?)$/) {
       print_syntax();
       exit;
-    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(opt|options?)=(.*)$/) {
-      print_syntax_subset($5);
+    } elsif ($arg=~/^-h-?(opt|options?)=(.*)$/) {
+      print_syntax_subset($2);
       exit;
-    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(styles?)$/) {
+    } elsif ($arg=~/^-h-?(styles?)$/) {
       print_help_on_styles();
       exit;
-    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(styles?)=(\w+)$/) {
-      print_help_on_styles($5);
+    } elsif ($arg=~/^-h-?(styles?)=(\w+)$/) {
+      print_help_on_styles($2);
       exit;
     } elsif ($arg=~/^--?(ver|version)$/) {
       print_version();
@@ -931,8 +947,9 @@ sub Parse_Arguments {
   my @args=@_;
   my @files;
   foreach my $arg (@args) {
-    if (parse_option($arg)) {next;}
     if ($arg=~/^\-/) {
+      $arg=~s/[=:]/=/;
+      if (parse_option($arg)) {next;}
       print "Invalid option $arg \n\n";
       print_short_help();
       exit;
@@ -1023,8 +1040,9 @@ sub _option_sum {
   my $arg=shift @_;
   if (!defined $arg) {
     @sumweights=(0,1,1,1,0,0,1,1);
-  } elsif ($arg=~/^(\d+(\.\d*)?(,\d+(\.\d*)?){0,6})$/) {
-    @sumweights=(0,split(',',$1));
+  } elsif ($arg=~/^(\d+(\.\d*)?([,+]\d+(\.\d*)?){0,6})$/) {
+    @sumweights=(0,split(/[,+]/,$arg));
+    print STDERR "SUMWEIGHTS: ",join(', ',@sumweights),"\n";
   } else {
     print STDERR "Warning: Option value $arg not valid, ignoring option.\n";
   }
@@ -1139,7 +1157,9 @@ sub __optionfile_tc {
 sub Parse_file_list {
   my @files=@_;
   my $listtotalcount=new_count('Total');
-  foreach (@files) {s/\\/\//g; s/ /\\ /g;}
+  foreach (@files) {
+    $_='"'.$_.'"'
+  }
   if (@files) {
     @files=<@files>; # For the sake of Windows: expand wildcards!
     for my $file (@files) {
@@ -2109,7 +2129,7 @@ sub _parse_unit {
 # Print state
 sub _set_printstate {
   my ($tex,$state,$end)=@_;
-  $tex->{'printstate'}=':'.state_to_text($state).':'.(defined $end?$end.':':'');
+  $tex->{'printstate'}=':'.state_to_text($state).(defined $end?'>'.$end:'').':';
   flush_next($tex);
 }
 
@@ -2692,7 +2712,9 @@ sub get_sum_count {
   my $count=shift @_;
   my $sum=0;
   for (my $i=scalar(@sumweights);$i-->1;) {
-    $sum+=get_count($count,$i)*$sumweights[$i];
+    if ($sumweights[$i]) {
+      $sum+=get_count($count,$i)*$sumweights[$i];
+    }
   }
   return $sum;
 }
@@ -3091,6 +3113,7 @@ sub __print_count_using_template {
   $template=__process_template($template,'SUM',get_sum_count($count));
   $template=__process_template($template,'TITLE',$count->{'title'}||'');
   $template=__process_template($template,'SUB',number_of_subcounts($count));
+  $template=~s/\a//gis;
   print $template;
 }
 
@@ -3115,7 +3138,7 @@ sub __process_template {
     $template=~s/\{($label)\?(.*?)\?(\1)\}//gis;
   }
   if (!defined $value) {$value='';}
-  $template=~s/\{($label)\}/$value/gis;
+  $template=~s/\{($label)\}/$value\a/gis;
   return $template;
 }
 
@@ -3655,16 +3678,16 @@ sub wprintlines {
   my $ind2=6;
   my $i;
   foreach my $line (@lines) {
-    if ($line=~s/^@//) {
-      $ind2=1+index($line,':');
-      $ind1=1+index($line,'-');
+    if ($line=~s/^@/ /) {
+      $ind1=index($line,'-');
+      $ind2=index($line,':');
       if ($ind1<1) {$ind1=$ind2;}
       next;
     }
     my $firstindent=0;
     if ($line=~s/^(\t|\s{2,})(\S)/$2/) {$firstindent=$ind1;}
     my $indent=$firstindent;
-    if ($line=~/^(.*\S)(\t|\s{2,})(.*)$/) {
+    if ($line=~/^(.*?\S)(\t|\s{2,})(.*)$/) {
       $indent=$ind2;
       if ($1 eq '|') {$line=' ';}
       else {$line=$1.'   ';}
@@ -3708,7 +3731,20 @@ The script has LPPL status "maintained" with ${maintainer} being the current mai
 :::::::::: ShortHelp
 Syntax: texcount.pl [options] files
 
-Use option -help (or just -h) to get help; -help-options (-hopt) to get list of command line options, or -help-options=substring for help on all options containing substring.
+Use option -help (or just -h) to get help. For more detailed help, the following alternatives exist:
+@ -                      :
+  -man, -help-man          Manual with more extensive help
+  -help={macro/envir}      Macro/environment handling rule (backslash needed with macros)       
+  -help-options (-hopt)    Get list of command line options
+  -help-options={substring}    Help on options containing substring
+  -help-styles             List styles which determine how different elements (words, macros, etc) are presented in the verbose output
+  -help-style={style}      Describe a particular style or style category
+
+Help, documentation, FAQ and updates are available from the TeXcount web page:
+    ${website}
+or through running
+    texdoc texcount
+on the command line.
 
 ::::::::::::::::::::::::::::::::::::::::
 :::::::::: HelpTitle

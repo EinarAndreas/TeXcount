@@ -131,6 +131,7 @@ sub AppendFile {
   foreach my $line (<INFILE>) {
     $line=~s/\r\n/\n/;
     if ($line=~/^\s*#+:+/) {}
+    elsif ($line=~/^\s*#+DEBUG(.*):/) {}
     elsif ($line=~/^\s*#{3,}\[\[INCLUDE:(.*)\]\]$/) {print FH IncludeFile($1);}
     else {print FH $line;}
   }

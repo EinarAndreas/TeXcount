@@ -84,16 +84,16 @@ sub wprintlines {
   my $ind2=6;
   my $i;
   foreach my $line (@lines) {
-    if ($line=~s/^@//) {
-      $ind2=1+index($line,':');
-      $ind1=1+index($line,'-');
+    if ($line=~s/^@/ /) {
+      $ind1=index($line,'-');
+      $ind2=index($line,':');
       if ($ind1<1) {$ind1=$ind2;}
       next;
     }
     my $firstindent=0;
     if ($line=~s/^(\t|\s{2,})(\S)/$2/) {$firstindent=$ind1;}
     my $indent=$firstindent;
-    if ($line=~/^(.*\S)(\t|\s{2,})(.*)$/) {
+    if ($line=~/^(.*?\S)(\t|\s{2,})(.*)$/) {
       $indent=$ind2;
       if ($1 eq '|') {$line=' ';}
       else {$line=$1.'   ';}

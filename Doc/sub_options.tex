@@ -1,10 +1,14 @@
 % Subsection: command line options
 
 \begin{description}
-\sloppy
+%PATTERN: \option[]
+%OUTPUT:  <dt>#1<dt>
+%OUTPUT:  <dd>#x<dd>
+%OUTPUT:
 \def\option[#1]{\item[\quad\code{#1}]\hskip 0pt plus 10pt}
 \def\alt#1{[#1]}
 \def\alts#1{[[#1]]}
+\sloppy
 
 \option[-v]Verbose (same as \code{-v3}).
 

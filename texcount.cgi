@@ -8,8 +8,8 @@ set_message('Please send information about this error to einarro@ifi.uio.no toge
 
 ##### Version information
 
-my $versionnumber="3.0.0.88";
-my $versiondate="2017 Feb 02";
+my $versionnumber="3.0.0.168";
+my $versiondate="2017 Feb 15";
 
 ###### Set global settings and variables
 
@@ -278,6 +278,7 @@ my %state2desc=(
     $STATE_EXCLUDE_STRONGER => 'stronger exclude: ignore environments and macro paramters',
     $STATE_EXCLUDE_ALL      => 'exlude all: even {, only scan for end marker',
     $STATE_PREAMBLE         => 'preamble: from \documentclass to \begin{document}',
+    $STATE_SPECIAL_ARGUMENT => 'special macro argument that TeXcount may process further',
     $STATE_TEXT             => 'text: count words',
     $STATE_TEXT_HEADER      => 'header text: count words as header words',
     $STATE_TEXT_FLOAT       => 'float text: count words as float words (e.g. captions)',
@@ -285,6 +286,13 @@ my %state2desc=(
     $STATE_TO_FLOAT         => 'float: count float, then count words as float/other words',
     $STATE_TO_INLINEMATH    => 'inline math: count as inline math/equation',
     $STATE_TO_DISPLAYMATH   => 'displayed math: count as displayed math/equation');
+
+# Short state name for each state for use with -showstates
+my %state2key = ($STATE_PREAMBLE=>'pre');
+for my $key ('x','xx','xxx','xall','w','hw','ow','eq','ds',
+        'head','float','isfloat','ismath','specarg') {
+  $state2key{$key2state{$key}}=$key;
+}
 
 # Parsing state presentation style
 my %state2style=(
@@ -327,6 +335,8 @@ sub state_inc_envir {
 # TODO: Should do a conversion based on STATE values.
 sub state_to_text {
   my $st=shift @_;
+  my $statename = $state2key{$st};
+  if (defined $statename) {$st=$statename;}
   return $st;
 }
 
@@ -347,6 +357,7 @@ sub add_new_counter {
   push @countdesc,$desc;
   if (defined $sumweights[$like]) {$sumweights[$cnt]=$sumweights[$like];}
   $key2state{$key}=$state;
+  $state2key{$state}=$key;
   $state2cnt{$state}=$cnt;
   $state2style{$state}='altwd';
   push @STATE_MID_PRIORITY,$state;
@@ -1743,7 +1754,7 @@ sub _parse_unit {
 # Print state
 sub _set_printstate {
   my ($tex,$state,$end)=@_;
-  $tex->{'printstate'}=':'.state_to_text($state).':'.(defined $end?$end.':':'');
+  $tex->{'printstate'}=':'.state_to_text($state).(defined $end?'>'.$end:'').':';
   flush_next($tex);
 }
 
@@ -2326,7 +2337,9 @@ sub get_sum_count {
   my $count=shift @_;
   my $sum=0;
   for (my $i=scalar(@sumweights);$i-->1;) {
-    $sum+=get_count($count,$i)*$sumweights[$i];
+    if ($sumweights[$i]) {
+      $sum+=get_count($count,$i)*$sumweights[$i];
+    }
   }
   return $sum;
 }
@@ -2725,6 +2738,7 @@ sub __print_count_using_template {
   $template=__process_template($template,'SUM',get_sum_count($count));
   $template=__process_template($template,'TITLE',$count->{'title'}||'');
   $template=__process_template($template,'SUB',number_of_subcounts($count));
+  $template=~s/\a//gis;
   print $template;
 }
 
@@ -2749,7 +2763,7 @@ sub __process_template {
     $template=~s/\{($label)\?(.*?)\?(\1)\}//gis;
   }
   if (!defined $value) {$value='';}
-  $template=~s/\{($label)\}/$value/gis;
+  $template=~s/\{($label)\}/$value\a/gis;
   return $template;
 }
 

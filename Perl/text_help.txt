@@ -24,7 +24,20 @@ The script has LPPL status "maintained" with ${maintainer} being the current mai
 :::::::::: ShortHelp
 Syntax: texcount.pl [options] files
 
-Use option -help (or just -h) to get help; -help-options (-hopt) to get list of command line options, or -help-options=substring for help on all options containing substring.
+Use option -help (or just -h) to get help. For more detailed help, the following alternatives exist:
+@ -                      :
+  -man, -help-man          Manual with more extensive help
+  -help={macro/envir}      Macro/environment handling rule (backslash needed with macros)       
+  -help-options (-hopt)    Get list of command line options
+  -help-options={substring}    Help on options containing substring
+  -help-styles             List styles which determine how different elements (words, macros, etc) are presented in the verbose output
+  -help-style={style}      Describe a particular style or style category
+
+Help, documentation, FAQ and updates are available from the TeXcount web page:
+    ${website}
+or through running
+    texdoc texcount
+on the command line.
 
 ::::::::::::::::::::::::::::::::::::::::
 :::::::::: HelpTitle

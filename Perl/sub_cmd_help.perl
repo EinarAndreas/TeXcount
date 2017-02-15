@@ -4,6 +4,7 @@
 #: Routines for external access:
 #:   >2_cmd_main
 #:     print_help()
+#:     print_short_help()
 #:     print_help_on_rule()
 #:     print_help_on_styles()
 #:     print_license()

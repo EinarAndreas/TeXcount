@@ -1,7 +1,12 @@
 %%
 %
 \begin{description}
+%PATTERN: \option{}[]{}
+%OUTPUT:  <dt>#1 (keys: #3; formerly code #2)<dt>
+%OUTPUT:  <dd>#x<dd>
+%OUTPUT:
 \def\option#1[#2]#3{\item[#1:] (key: \code{#3} formerly \code{#2})}
+
 \option{Text}[1]{text, word, wd, w}
  Count as text (i.e. count words).
 \option{Header text}[2]{headertext, headerword, hword, hwd, hw}

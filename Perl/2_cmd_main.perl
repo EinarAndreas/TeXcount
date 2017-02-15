@@ -64,23 +64,28 @@ sub Check_Arguments {
     exit;
   }
   for my $arg (@args) {
-    if ($arg=~/^(--?(h|\?|help)|\/(\?|h))$/) {
+    $arg=~s/^(--?(h|\?|help)|\/(\?|h))\b/-h/;
+    $arg=~s/[=:]/=/;
+    if ($arg=~/^-h$/) {
+      print_short_help();
+      exit;
+    } elsif ($arg=~/^-h=(.*)$/) {
+      print_help_on_rule($1);
+      exit;
+    } elsif ($arg=~/^-(h-)?(man|manual)$/) {
       print_help();
       exit;
-    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))=(.*)$/) {
-      print_help_on_rule($4);
-      exit;
-    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(opt|options?)$/) {
+    } elsif ($arg=~/^-h-?(opt|options?)$/) {
       print_syntax();
       exit;
-    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(opt|options?)=(.*)$/) {
-      print_syntax_subset($5);
+    } elsif ($arg=~/^-h-?(opt|options?)=(.*)$/) {
+      print_syntax_subset($2);
       exit;
-    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(styles?)$/) {
+    } elsif ($arg=~/^-h-?(styles?)$/) {
       print_help_on_styles();
       exit;
-    } elsif ($arg=~/^(--?(h|\?|help)|\/(\?|h))-?(styles?)=(\w+)$/) {
-      print_help_on_styles($5);
+    } elsif ($arg=~/^-h-?(styles?)=(\w+)$/) {
+      print_help_on_styles($2);
       exit;
     } elsif ($arg=~/^--?(ver|version)$/) {
       print_version();
@@ -98,8 +103,9 @@ sub Parse_Arguments {
   my @args=@_;
   my @files;
   foreach my $arg (@args) {
-    if (parse_option($arg)) {next;}
     if ($arg=~/^\-/) {
+      $arg=~s/[=:]/=/;
+      if (parse_option($arg)) {next;}
       print "Invalid option $arg \n\n";
       print_short_help();
       exit;
@@ -190,8 +196,9 @@ sub _option_sum {
   my $arg=shift @_;
   if (!defined $arg) {
     @sumweights=(0,1,1,1,0,0,1,1);
-  } elsif ($arg=~/^(\d+(\.\d*)?(,\d+(\.\d*)?){0,6})$/) {
-    @sumweights=(0,split(',',$1));
+  } elsif ($arg=~/^(\d+(\.\d*)?([,+]\d+(\.\d*)?){0,6})$/) {
+    @sumweights=(0,split(/[,+]/,$arg));
+    print STDERR "SUMWEIGHTS: ",join(', ',@sumweights),"\n";
   } else {
     print STDERR "Warning: Option value $arg not valid, ignoring option.\n";
   }
@@ -306,10 +313,15 @@ sub __optionfile_tc {
 sub Parse_file_list {
   my @files=@_;
   my $listtotalcount=new_count('Total');
-  foreach (@files) {s/\\/\//g; s/ /\\ /g;}
+  foreach (@files) {
+    $_='"'.$_.'"'
+  }
+  #DEBUG: print STDERR "FILES: ",join(' + ',@files),"\n";
   if (@files) {
     @files=<@files>; # For the sake of Windows: expand wildcards!
+    #DEBUG: print STDERR "<FILES>: ",join(' + ',@files),"\n";
     for my $file (@files) {
+      #DEBUG: print STDERR "FILE: ",$file,"\n";
       my $filetotalcount=parse_file($file);
       add_to_total($listtotalcount,$filetotalcount);
     }
