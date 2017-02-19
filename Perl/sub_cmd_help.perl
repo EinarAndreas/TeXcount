@@ -3,24 +3,20 @@
 #::
 #: Routines for external access:
 #:   >2_cmd_main
-#:     print_help()
-#:     print_short_help()
-#:     print_help_on_rule()
-#:     print_help_on_styles()
-#:     print_license()
-#:     print_reference()
-#:     print_syntax()
-#:     print_version()
+#:     print_version() : Version
+#:     print_license() : License
+#:     print_help() : ShortHelp
+#:     print_help_man() : HelpTitle + HelpText + Reference
+#:     print_help_on_rule(name) : Help on particular macro/environment
+#:     print_help_on_styles([style]) : Help on styles
+#:     print_help_tcinst() : Help on TC-instructions 
+#:     print_help_options() : Help on options
+#:     print_help_options_subset(pattern) : Help on options, subset by pattern
 #:
 
 # Print TeXcount version
 sub print_version {
   wprintstringdata('Version');
-}
-
-# Print TeXcount reference text
-sub print_reference {
-  wprintstringdata('Reference');
 }
 
 # Print TeXcount licence text
@@ -29,18 +25,30 @@ sub print_license {
 }
 
 # Print short TeXcount help
-sub print_short_help {
+sub print_help {
   wprintstringdata('ShortHelp');
 }
 
-# Print TeXcount options list
-sub print_syntax {
-  wprintstringdata('OptionsHead');
-  wprintstringdata('Options','@ -          :');
+# Print main TeXcount help
+sub print_help_man {
+  wprintstringdata('HelpTitle');
+  wprintstringdata('HelpText');
+  wprintstringdata('Reference');
 }
 
-# Prinst TeXcount options containing substring
-sub print_syntax_subset {
+# Print help on TC instructions
+sub print_help_tcinst {
+  wprintstringdata('TCinstructions');
+}
+
+# Print TeXcount options list
+sub print_help_options {
+  wprintstringdata('OptionsHead');
+  wprintstringdata('Options',StringDatum('OptionsFormat'));
+}
+
+# Print TeXcount options containing substring
+sub print_help_options_subset {
   my $pattern=shift @_;
   my $data=StringData('Options');
   if (!defined $data) {
@@ -54,27 +62,8 @@ sub print_syntax_subset {
   if (scalar(@options)==0) {print "No options contained $pattern.\n";}
   else {
     print "Options containing \"$pattern\":\n\n";
-    wprintlines('@ -          :',@options);
+    wprintlines(StringDatum('OptionsFormat'),@options);
   }
-}
-
-# Print complete TeXcount help
-sub print_help {
-  print_help_title();
-  print_syntax();
-  print_help_text();
-  print_reference();
-}
-
-# Print help title 
-sub print_help_title {
-  wprintstringdata('HelpTitle');
-}
-
-# Print help text
-sub print_help_text {
-  wprintstringdata('HelpText');
-  wprintstringdata('TCinstructions');
 }
 
 # Print help on specific macro or environment
@@ -140,16 +129,20 @@ sub print_help_on_rule {
 # Print macro handling rule
 sub _print_rule_macro {
   my ($arg,$def)=@_;
-  if (ref($def) eq 'ARRAY') {
+  if (!defined $def) {
+    print "Takes no parameter(s).\n";
+  } elsif (ref($def) eq 'ARRAY') {
     my $optionflag=0;
-    print "Takes the following parameter(s):\n";
+    print "Takes has the following parameters and parameter rules:\n";
     foreach my $state (@{$def}) {
       if ($state==$_STATE_OPTION) {$optionflag=1;}
+      elsif ($state==$_STATE_NOOPTION) {print " - no [] options permitted here\n";}
+      elsif ($state==$_STATE_AUTOOPTION) {}
       elsif ($optionflag) {
         $optionflag=0;
-        print " - Optional [] containing $state2desc{$state}\n";
+        print " + optional [] containing $state2desc{$state}\n";
       } else {
-        print " - $state2desc{$state}\n";
+        print " + $state2desc{$state}\n";
       }
     }
   } else {
@@ -162,7 +155,9 @@ sub _print_rule_envir {
   my ($arg,$def)=@_;
   print "Contents parsed as $state2desc{$def}\n";
   if ($def=$TeXmacro{$PREFIX_ENVIR.$arg}) {
-    _print_rule_macro($def);
+    _print_rule_macro($arg,$def);
+  } else {
+    print "Takes no parameter(s).\n";
   }
 }
 

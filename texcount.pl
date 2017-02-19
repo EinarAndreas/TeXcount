@@ -18,10 +18,21 @@ if ($^O=~/^MSWin/) {
   }
 }
 
+# Terminal width
+my $terminalwidth=76;
+eval {
+  require Term::ReadKey;
+  use Term::ReadKey;
+  ($terminalwidth)=GetTerminalSize();
+  if ($terminalwidth<60) {$terminalwidth=60}
+  if ($terminalwidth>120) {$terminalwidth=120}
+};
+
+
 ##### Version information
 
-my $versionnumber="3.0.0.168";
-my $versiondate="2017 Feb 15";
+my $versionnumber="3.0.0.198";
+my $versiondate="2017 Feb 20";
 
 ###### Set global settings and variables
 
@@ -124,7 +135,7 @@ my $fileFromSTDIN=0; # Flag to set input from STDIN
 my $_STDIN_='<STDIN>'; # File name to represent STDIN (must be '<...>'!)
 
 # CMD specific settings
-$Text::Wrap::columns=76; # Page width for wrapped output
+$Text::Wrap::columns=$terminalwidth; # Page width for wrapped output
 
 ###### Set state identifiers and methods
 
@@ -296,7 +307,10 @@ my %state2desc=(
     $STATE_TO_HEADER        => 'header: count header, then count words as header words',
     $STATE_TO_FLOAT         => 'float: count float, then count words as float/other words',
     $STATE_TO_INLINEMATH    => 'inline math: count as inline math/equation',
-    $STATE_TO_DISPLAYMATH   => 'displayed math: count as displayed math/equation');
+    $STATE_TO_DISPLAYMATH   => 'displayed math: count as displayed math/equation',
+    $_STATE_OPTION          => 'rule for [] option follows',
+    $_STATE_NOOPTION        => 'no [] options allowed here',
+    $_STATE_AUTOOPTION      => 'automatic [] option gobbling');
 
 # Short state name for each state for use with -showstates
 my %state2key = ($STATE_PREAMBLE=>'pre');
@@ -911,25 +925,28 @@ sub Check_Arguments {
     $arg=~s/^(--?(h|\?|help)|\/(\?|h))\b/-h/;
     $arg=~s/[=:]/=/;
     if ($arg=~/^-h$/) {
-      print_short_help();
-      exit;
-    } elsif ($arg=~/^-h=(.*)$/) {
-      print_help_on_rule($1);
-      exit;
-    } elsif ($arg=~/^-(h-)?(man|manual)$/) {
       print_help();
       exit;
+    } elsif ($arg=~/^-(h-)?(man|manual)$/) {
+      print_help_man();
+      exit;
     } elsif ($arg=~/^-h-?(opt|options?)$/) {
-      print_syntax();
+      print_help_options();
       exit;
     } elsif ($arg=~/^-h-?(opt|options?)=(.*)$/) {
-      print_syntax_subset($2);
+      print_help_options_subset($2);
       exit;
-    } elsif ($arg=~/^-h-?(styles?)$/) {
+    } elsif ($arg=~/^-h(-rule)?=(.*)$/) {
+      print_help_on_rule($2);
+      exit;
+    } elsif ($arg=~/^-h-styles?$/) {
       print_help_on_styles();
       exit;
-    } elsif ($arg=~/^-h-?(styles?)=(\w+)$/) {
-      print_help_on_styles($2);
+    } elsif ($arg=~/^-h-styles?=(\w+)$/) {
+      print_help_on_styles($1);
+      exit;
+    } elsif ($arg=~/^-h-(tc|(tc)?inst(ructions?))?$/) {
+      print_help_tcinst();
       exit;
     } elsif ($arg=~/^--?(ver|version)$/) {
       print_version();
@@ -3273,29 +3290,36 @@ sub print_version {
   wprintstringdata('Version');
 }
 
-# Print TeXcount reference text
-sub print_reference {
-  wprintstringdata('Reference');
-}
-
 # Print TeXcount licence text
 sub print_license {
   wprintstringdata('License');
 }
 
 # Print short TeXcount help
-sub print_short_help {
+sub print_help {
   wprintstringdata('ShortHelp');
 }
 
-# Print TeXcount options list
-sub print_syntax {
-  wprintstringdata('OptionsHead');
-  wprintstringdata('Options','@ -          :');
+# Print main TeXcount help
+sub print_help_man {
+  wprintstringdata('HelpTitle');
+  wprintstringdata('HelpText');
+  wprintstringdata('Reference');
 }
 
-# Prinst TeXcount options containing substring
-sub print_syntax_subset {
+# Print help on TC instructions
+sub print_help_tcinst {
+  wprintstringdata('TCinstructions');
+}
+
+# Print TeXcount options list
+sub print_help_options {
+  wprintstringdata('OptionsHead');
+  wprintstringdata('Options',StringDatum('OptionsFormat'));
+}
+
+# Print TeXcount options containing substring
+sub print_help_options_subset {
   my $pattern=shift @_;
   my $data=StringData('Options');
   if (!defined $data) {
@@ -3309,27 +3333,8 @@ sub print_syntax_subset {
   if (scalar(@options)==0) {print "No options contained $pattern.\n";}
   else {
     print "Options containing \"$pattern\":\n\n";
-    wprintlines('@ -          :',@options);
+    wprintlines(StringDatum('OptionsFormat'),@options);
   }
-}
-
-# Print complete TeXcount help
-sub print_help {
-  print_help_title();
-  print_syntax();
-  print_help_text();
-  print_reference();
-}
-
-# Print help title 
-sub print_help_title {
-  wprintstringdata('HelpTitle');
-}
-
-# Print help text
-sub print_help_text {
-  wprintstringdata('HelpText');
-  wprintstringdata('TCinstructions');
 }
 
 # Print help on specific macro or environment
@@ -3395,16 +3400,20 @@ sub print_help_on_rule {
 # Print macro handling rule
 sub _print_rule_macro {
   my ($arg,$def)=@_;
-  if (ref($def) eq 'ARRAY') {
+  if (!defined $def) {
+    print "Takes no parameter(s).\n";
+  } elsif (ref($def) eq 'ARRAY') {
     my $optionflag=0;
-    print "Takes the following parameter(s):\n";
+    print "Takes has the following parameters and parameter rules:\n";
     foreach my $state (@{$def}) {
       if ($state==$_STATE_OPTION) {$optionflag=1;}
+      elsif ($state==$_STATE_NOOPTION) {print " - no [] options permitted here\n";}
+      elsif ($state==$_STATE_AUTOOPTION) {}
       elsif ($optionflag) {
         $optionflag=0;
-        print " - Optional [] containing $state2desc{$state}\n";
+        print " + optional [] containing $state2desc{$state}\n";
       } else {
-        print " - $state2desc{$state}\n";
+        print " + $state2desc{$state}\n";
       }
     }
   } else {
@@ -3417,7 +3426,9 @@ sub _print_rule_envir {
   my ($arg,$def)=@_;
   print "Contents parsed as $state2desc{$def}\n";
   if ($def=$TeXmacro{$PREFIX_ENVIR.$arg}) {
-    _print_rule_macro($def);
+    _print_rule_macro($arg,$def);
+  } else {
+    print "Takes no parameter(s).\n";
   }
 }
 
@@ -3617,6 +3628,11 @@ sub StringData {
   return STRINGDATA()->{$name};
 }
 
+# First line of StringData
+sub StringDatum {
+  return pop @{StringData(@_)};
+}
+
 # Insert value from GLOBALDATA
 sub __apply_globaldata {
   my $name=shift @_;
@@ -3710,11 +3726,11 @@ __DATA__
 TeXcount version ${versionnumber}, ${versiondate}.
 
 :::::::::: Reference
-The TeXcount script is copyright of ${maintainer} (${copyrightyears}) and published under the LaTeX Project Public Licence.
-
 Go to the TeXcount web page
     ${website}
-for more information about the script, e.g. news, updates, help, usage tips, known issues and short-comings, or to access the script as a web application. Feedback such as problems or errors can be reported to einarro@ifi.uio.no.
+for more help and information about the script: news, updates, help, usage tips, known issues and short-comings, or to access the script as a web application. Feedback such as problems or errors can be reported to einarro@ifi.uio.no.
+
+The TeXcount script is copyright of ${maintainer} (${copyrightyears}) and published under the LaTeX Project Public Licence.
 
 :::::::::: License
 TeXcount version ${versionnumber}
@@ -3734,11 +3750,12 @@ Syntax: texcount.pl [options] files
 Use option -help (or just -h) to get help. For more detailed help, the following alternatives exist:
 @ -                      :
   -man, -help-man          Manual with more extensive help
-  -help={macro/envir}      Macro/environment handling rule (backslash needed with macros)       
+  -help-rule={macro/envir}    Macro/environment handling rule (backslash needed with macros)       
   -help-options (-hopt)    Get list of command line options
   -help-options={substring}    Help on options containing substring
   -help-styles             List styles which determine how different elements (words, macros, etc) are presented in the verbose output
   -help-style={style}      Describe a particular style or style category
+  -help-tc, -help-instructions    Help on %TC:instruction for inserting TeXcount instructions into the TeX code.
 
 Help, documentation, FAQ and updates are available from the TeXcount web page:
     ${website}
@@ -3755,13 +3772,25 @@ on the command line.
 Count words in TeX and LaTeX files, ignoring macros, tables, formulae, etc.
 
 ::::::::::::::::::::::::::::::::::::::::
+:::::::::: HelpText
+The script counts words as either words in the text, words in headers/titles or words in floats (figure/table captions). Macro options (i.e. \\macro[...]) are ignored; macro parameters (i.e. \\macro{...}) are counted or ignored depending on the macro, but by default counted. Begin-end groups are by default ignored and treated as 'floats', though some (e.g. center) are counted.
+
+Mathematical formulae are not counted as words, but are instead counted separately with separate counts for inlined formulae and displayed formulae. Similarly, the number of headers and the number of 'floats' are counted. Note that 'float' is used here to describe anything defined in a begin-end group unless explicitly recognized as text or mathematics.
+
+The verbose options (-v1, -v2, -v3, showstate) produces output indicating how the text has been interpreted. Check this to ensure that words in the text has been interpreted as such, whereas mathematical formulae and text/non-text in begin-end groups have been correctly interpreted.
+
+Summary, as well as the verbose output, may be produced as text (default) or as HTML code using the -html option. The HTML may then be sent to file which may be viewed with you favourite browser.
+
+Under UNIX, unless -nocol (or -nc) has been specified, the output will be colour coded using ANSI colour codes. Counted text is coloured blue with headers are in bold and in HTML output caption text is italicised. Use 'less -r' instead of just 'less' to view output: the '-r' option makes less treat text formating codes properly. Windows does not support ANSI colour codes, and so this is turned off by default.
+
+::::::::::::::::::::::::::::::::::::::::
 :::::::::: OptionsHead
 
 Syntax: texcount.pl [options] files
 
 Options:
 
-:::::::::: OptionsPrefix
+:::::::::: OptionsFormat
 @ -          :
 :::::::::: Options
   -relaxed      Uses relaxed rules for word and option handling: i.e. allows more general cases to be counted as either words or macros.
@@ -3824,26 +3853,17 @@ Options:
   -out=         Write output to file, give filename as option value.
   -out-stderr   Write output to STDERR instead of STDOUT.
   -h, -?, -help, /?    Help text.
-  -h=, -?=, -help=, /?=    Takes a macro or group name as option and returns a description of the rules for handling this if any are defined. If handling rule is package specific, use -incpackage=package name: -incpackage must come before -h= on the command line to take effect.
+  -help-man, -man    Short manual.
+  -h=, -help-rule=    Takes a macro or group name as option and returns a description of the rules for handling this if any are defined. If handling rule is package specific, use -incpackage=package name: -incpackage must come before -h= on the command line to take effect.
   -help-options, -h-opt    List all options.
   -help-options=, -h-opt=   List all options containing the provided string, e.g. -h-opt=dir or -h-opt=-v (the initial - in -v causes only options starting with v to be listed).
+  -help-tc, -help-inst    List all TeXcount instructions insertable as %TC comments in the TeX document.
   -help-style   List the styles and style categories: i.e. those permitted used with -v={styles-list}.
   -help-style=   Give description of style or style category.
   -ver, -version    Print version number.
   -lic, -license, -licence    Licence information.
 
 ::::::::::::::::::::::::::::::::::::::::
-:::::::::: HelpText
-The script counts words as either words in the text, words in headers/titles or words in floats (figure/table captions). Macro options (i.e. \\macro[...]) are ignored; macro parameters (i.e. \\macro{...}) are counted or ignored depending on the macro, but by default counted. Begin-end groups are by default ignored and treated as 'floats', though some (e.g. center) are counted.
-
-Mathematical formulae are not counted as words, but are instead counted separately with separate counts for inlined formulae and displayed formulae. Similarly, the number of headers and the number of 'floats' are counted. Note that 'float' is used here to describe anything defined in a begin-end group unless explicitly recognized as text or mathematics.
-
-The verbose options (-v1, -v2, -v3, showstate) produces output indicating how the text has been interpreted. Check this to ensure that words in the text has been interpreted as such, whereas mathematical formulae and text/non-text in begin-end groups have been correctly interpreted.
-
-Summary, as well as the verbose output, may be produced as text (default) or as HTML code using the -html option. The HTML may then be sent to file which may be viewed with you favourite browser.
-
-Under UNIX, unless -nocol (or -nc) has been specified, the output will be colour coded using ANSI colour codes. Counted text is coloured blue with headers are in bold and in HTML output caption text is italicised. Use 'less -r' instead of just 'less' to view output: the '-r' option makes less treat text formating codes properly. Windows does not support ANSI colour codes, and so this is turned off by default.
-
 :::::::::: TCinstructions
 Parsing instructions may be passed to TeXcount using comments in the LaTeX files on the format
 @ -      :

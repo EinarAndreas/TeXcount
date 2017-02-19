@@ -171,7 +171,10 @@ my %state2desc=(
     $STATE_TO_HEADER        => 'header: count header, then count words as header words',
     $STATE_TO_FLOAT         => 'float: count float, then count words as float/other words',
     $STATE_TO_INLINEMATH    => 'inline math: count as inline math/equation',
-    $STATE_TO_DISPLAYMATH   => 'displayed math: count as displayed math/equation');
+    $STATE_TO_DISPLAYMATH   => 'displayed math: count as displayed math/equation',
+    $_STATE_OPTION          => 'rule for [] option follows',
+    $_STATE_NOOPTION        => 'no [] options allowed here',
+    $_STATE_AUTOOPTION      => 'automatic [] option gobbling');
 
 # Short state name for each state for use with -showstates
 my %state2key = ($STATE_PREAMBLE=>'pre');

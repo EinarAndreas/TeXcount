@@ -17,3 +17,14 @@ if ($^O=~/^MSWin/) {
     print STDERR "NOTE: Package Win32::Console::ANSI required for colour coded output.\n";
   }
 }
+
+# Terminal width
+my $terminalwidth=76;
+eval {
+  require Term::ReadKey;
+  use Term::ReadKey;
+  ($terminalwidth)=GetTerminalSize();
+  if ($terminalwidth<60) {$terminalwidth=60}
+  if ($terminalwidth>120) {$terminalwidth=120}
+};
+

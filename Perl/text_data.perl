@@ -3,6 +3,15 @@
 #:
 #:   >sub_cmd_help
 #:     wprintstringdata($name,[@lines])
+#:
+#: STRINGDATA parses the <DATA> region, and organises the lines into
+#: a hash of arrays
+#:   $STRINGDATA->{$id} = [...]
+#: by using lines on the form
+#:   ::: id
+#: (3 or more ":" followed by id) as identifiers of new hashes in STRINGDATA and
+#:   :::::
+#: with no identifier to ensure the end of a region.
 
 
 # Return the STRINGDATA hash (lazy instantiation)
@@ -21,6 +30,11 @@ sub STRINGDATA {
 sub StringData {
   my $name=shift @_;
   return STRINGDATA()->{$name};
+}
+
+# First line of StringData
+sub StringDatum {
+  return pop @{StringData(@_)};
 }
 
 # Insert value from GLOBALDATA

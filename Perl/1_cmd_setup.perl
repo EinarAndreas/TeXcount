@@ -13,4 +13,4 @@ my $fileFromSTDIN=0; # Flag to set input from STDIN
 my $_STDIN_='<STDIN>'; # File name to represent STDIN (must be '<...>'!)
 
 # CMD specific settings
-$Text::Wrap::columns=76; # Page width for wrapped output
+$Text::Wrap::columns=$terminalwidth; # Page width for wrapped output

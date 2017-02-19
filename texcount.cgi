@@ -8,8 +8,8 @@ set_message('Please send information about this error to einarro@ifi.uio.no toge
 
 ##### Version information
 
-my $versionnumber="3.0.0.168";
-my $versiondate="2017 Feb 15";
+my $versionnumber="3.0.0.198";
+my $versiondate="2017 Feb 20";
 
 ###### Set global settings and variables
 
@@ -285,7 +285,10 @@ my %state2desc=(
     $STATE_TO_HEADER        => 'header: count header, then count words as header words',
     $STATE_TO_FLOAT         => 'float: count float, then count words as float/other words',
     $STATE_TO_INLINEMATH    => 'inline math: count as inline math/equation',
-    $STATE_TO_DISPLAYMATH   => 'displayed math: count as displayed math/equation');
+    $STATE_TO_DISPLAYMATH   => 'displayed math: count as displayed math/equation',
+    $_STATE_OPTION          => 'rule for [] option follows',
+    $_STATE_NOOPTION        => 'no [] options allowed here',
+    $_STATE_AUTOOPTION      => 'automatic [] option gobbling');
 
 # Short state name for each state for use with -showstates
 my %state2key = ($STATE_PREAMBLE=>'pre');

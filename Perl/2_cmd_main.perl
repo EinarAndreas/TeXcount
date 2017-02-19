@@ -67,25 +67,28 @@ sub Check_Arguments {
     $arg=~s/^(--?(h|\?|help)|\/(\?|h))\b/-h/;
     $arg=~s/[=:]/=/;
     if ($arg=~/^-h$/) {
-      print_short_help();
-      exit;
-    } elsif ($arg=~/^-h=(.*)$/) {
-      print_help_on_rule($1);
-      exit;
-    } elsif ($arg=~/^-(h-)?(man|manual)$/) {
       print_help();
       exit;
+    } elsif ($arg=~/^-(h-)?(man|manual)$/) {
+      print_help_man();
+      exit;
     } elsif ($arg=~/^-h-?(opt|options?)$/) {
-      print_syntax();
+      print_help_options();
       exit;
     } elsif ($arg=~/^-h-?(opt|options?)=(.*)$/) {
-      print_syntax_subset($2);
+      print_help_options_subset($2);
       exit;
-    } elsif ($arg=~/^-h-?(styles?)$/) {
+    } elsif ($arg=~/^-h(-rule)?=(.*)$/) {
+      print_help_on_rule($2);
+      exit;
+    } elsif ($arg=~/^-h-styles?$/) {
       print_help_on_styles();
       exit;
-    } elsif ($arg=~/^-h-?(styles?)=(\w+)$/) {
-      print_help_on_styles($2);
+    } elsif ($arg=~/^-h-styles?=(\w+)$/) {
+      print_help_on_styles($1);
+      exit;
+    } elsif ($arg=~/^-h-(tc|(tc)?inst(ructions?))?$/) {
+      print_help_tcinst();
       exit;
     } elsif ($arg=~/^--?(ver|version)$/) {
       print_version();
