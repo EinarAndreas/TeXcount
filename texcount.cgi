@@ -8,8 +8,8 @@ set_message('Please send information about this error to einarro@ifi.uio.no toge
 
 ##### Version information
 
-my $versionnumber="3.0.0.198";
-my $versiondate="2017 Feb 20";
+my $versionnumber="3.0.0.250";
+my $versiondate="2017 Feb 22";
 
 ###### Set global settings and variables
 
@@ -389,7 +389,7 @@ my %STYLES;
 my $STYLE_EMPTY=' ';
 my $STYLE_BLOCK='-';
 my $NOSTYLE=' ';
-$STYLES{'Errors'}={'error'=>'bold red'};
+$STYLES{'Errors'}={'error'=>'bold red','note'=>'bold white'};
 $STYLES{'Words'}={'word'=>'blue','hword'=>'bold blue','oword'=>'blue','altwd'=>'blue'};
 $STYLES{'Macros'}={'cmd'=>'green','fileinc'=>'bold green','special'=>'bold red','specarg'=>'red'};
 $STYLES{'Options'}={'option'=>'yellow','optparm'=>'green'};
@@ -399,8 +399,8 @@ $STYLES{'Groups'}={'document'=>'bold red','envir'=>'red','mathgroup'=>'magenta'}
 $STYLES{'Comments'}={'tc'=>'bold yellow','comment'=>'yellow'};
 $STYLES{'Sums'}={'cumsum'=>'yellow'};
 $STYLES{'States'}={'state'=>'cyan underline'};
-$STYLES{'<core>'}={%{$STYLES{'Errors'}},$STYLE_EMPTY=>$NOSTYLE,'<printlevel>'=>1};
-$STYLES{0}={%{$STYLES{'Errors'}},'<printlevel>'=>0};
+$STYLES{'<core>'}={%{$STYLES{'Errors'}},$STYLE_EMPTY=>$NOSTYLE,'<printlevel>'=>1,'note'=>'bold white'};
+$STYLES{0}={%{$STYLES{'Errors'}},'<printlevel>'=>0,'note'=>'bold white'};
 $STYLES{1}={%{$STYLES{'<core>'}},%{$STYLES{'Words'}},%{$STYLES{'Groups'}},%{$STYLES{'Sums'}}};
 $STYLES{2}={%{$STYLES{1}},%{$STYLES{'Macros'}},%{$STYLES{'Ignored'}},%{$STYLES{'Excluded'}}};
 $STYLES{3}={%{$STYLES{2}},%{$STYLES{'Options'}},%{$STYLES{'Comments'}},'<printlevel>'=>2};
@@ -1591,6 +1591,36 @@ sub get_texsize {
 ###### Error handling
 
 
+# Print note to output
+sub note {
+  my ($tex,$level,$text,$prefix,$style)=@_;
+  if ($printlevel>=$level) {
+    $prefix=(defined $prefix)?$prefix:'%NOTE: ';
+    $style=(defined $style)?$style:'note';
+    $text=count_in_template($tex->{'subcount'},$text);
+    flush_next($tex);
+    line_return(0,$tex);
+    print_style($prefix.$text,$style);
+    flush_next($tex);
+    $blankline=-1;    
+  }
+}
+
+# Compare count with expected and note if assertion fails
+sub assertion_note {
+  my ($tex,$checktext,$template)=@_;
+  my $count=$tex->{'subcount'};
+  my @check=split(/,/,$checktext);
+  for (my $i=scalar @check;$i>0;$i--) {
+    if ($check[$i-1] ne get_count($count,$i)) {
+      my $msg=$template.' [expected:'.join(',',@check).']';
+      note($tex,0,$msg,'%ASSERTION FAILED: ','error');
+      return 1;
+    }
+  }
+  return 0;
+}
+
 # Add warning to list of registered warnings (optionally to be reported at the end)
 sub warning {
   my ($tex,$text)=@_;
@@ -1863,7 +1893,7 @@ sub _parse_tc {
   } elsif ($instr eq 'insert') {
     $tex->{'line'}="\n".$next.$tex->{'line'};
   } elsif ($instr eq 'subst') {
-    if ($next=~/^(\\\S+)\s+(.*)$/) {
+    if ($next=~/^(\S+)\s*(\S.*)?$/) {
       my $from=$1;
       my $to=$2;
       $substitutions{$from}=$to;
@@ -1872,12 +1902,20 @@ sub _parse_tc {
       error($tex,'Invalid %TC:subst format.');
     }
   } elsif ($instr eq 'newcounter') {
-    assert($next=~s/^(\w+)(=(\w+))?\s*//,$tex,'Should have format %TC:newcounter {key}[={like-key}] {description}')
+    assert($next=~s/^(\w+)(=(\w+))?\s*//,$tex,'Expected format: %TC:newcounter {key}[={like-key}] {description}')
     || return;
     my $key=$1;
     my $like=$3;
     if ($next eq '') {$next=$key;}
     add_new_counter($key,$next,$like);
+  } elsif ($instr eq 'log') {
+    assert($next=~s/^(.*)$//,$tex,'Expected format: %TC:log {text or template}') || return;
+    note($tex,1,$1);
+  } elsif ($instr eq 'assert') {
+    assert($next=~s/^(\d+(,\d+)*)(\s+(.*))?$//,$tex,'Expected format: %TC:assert count+count+... {text or template}')
+    || return;
+    my $template=$4 || 'Words counted: {w} in text, {hw} in headers, {ow} other.';
+    assertion_note($tex,$1,$template);
   } elsif ($next=~/^([\\]*\S+)\s+([^\s]+)(\s+(-?\w+))?/) {
     # %TC:instr macro param option
     my $macro=$1;
@@ -2623,6 +2661,7 @@ sub linebreak {
 # Print count summary for a count object
 sub print_count {
   my ($count,$class)=@_;
+  line_return(0);
   if ($htmlstyle) {print "<div class='".($class||'count')."'>\n";}  
   if ($outputtemplate) {
     _print_count_template($count,$outputtemplate);
@@ -2728,8 +2767,8 @@ sub _print_count_template {
   __print_count_using_template($count,$template);
 }
 
-# Print counts using template
-sub __print_count_using_template {
+# Return string with counts based on template
+sub count_in_template {
   my ($count,$template)=@_;
   while (my ($key,$cnt)=each %key2cnt) {
     $template=__process_template($template,$key,get_count($count,$cnt));
@@ -2742,7 +2781,12 @@ sub __print_count_using_template {
   $template=__process_template($template,'TITLE',$count->{'title'}||'');
   $template=__process_template($template,'SUB',number_of_subcounts($count));
   $template=~s/\a//gis;
-  print $template;
+  return $template;
+}
+
+# Print counts using template
+sub __print_count_using_template {
+  print count_in_template(@_);
 }
 
 # Print subcounts using template
@@ -2993,6 +3037,7 @@ body {width:auto;padding:5;margin:5;}
 .cumsum {color: #999; font-size: 80%;}
 .fileinc {color: #696; font-weight:bold;}
 .warning {color: #c00; font-weight: 700;}
+.note {color: #c90; font-weight: bold;}
 
 div.filegroup, div.parse, div.stylehelp, div.count, div.sumcount, div.error {
    border: solid 1px #999; margin: 4pt 0pt; padding: 4pt;

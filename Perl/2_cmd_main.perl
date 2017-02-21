@@ -110,7 +110,7 @@ sub Parse_Arguments {
       $arg=~s/[=:]/=/;
       if (parse_option($arg)) {next;}
       print "Invalid option $arg \n\n";
-      print_short_help();
+      print_help();
       exit;
     } elsif ($arg=~/^@\-/) { # ignored option
       next;

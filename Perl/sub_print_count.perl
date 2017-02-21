@@ -3,11 +3,14 @@
 #::
 #:   >2_*_main,sub_cmd
 #:     print_count($count[,$class])
+#:   >2_sub_errors
+#:     count_in_template($count,$template)
 #:
 
 # Print count summary for a count object
 sub print_count {
   my ($count,$class)=@_;
+  line_return(0);
   if ($htmlstyle) {print "<div class='".($class||'count')."'>\n";}  
   if ($outputtemplate) {
     _print_count_template($count,$outputtemplate);
@@ -113,8 +116,8 @@ sub _print_count_template {
   __print_count_using_template($count,$template);
 }
 
-# Print counts using template
-sub __print_count_using_template {
+# Return string with counts based on template
+sub count_in_template {
   my ($count,$template)=@_;
   while (my ($key,$cnt)=each %key2cnt) {
     $template=__process_template($template,$key,get_count($count,$cnt));
@@ -127,7 +130,12 @@ sub __print_count_using_template {
   $template=__process_template($template,'TITLE',$count->{'title'}||'');
   $template=__process_template($template,'SUB',number_of_subcounts($count));
   $template=~s/\a//gis;
-  print $template;
+  return $template;
+}
+
+# Print counts using template
+sub __print_count_using_template {
+  print count_in_template(@_);
 }
 
 # Print subcounts using template

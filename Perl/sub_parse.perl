@@ -219,7 +219,7 @@ sub _parse_tc {
   } elsif ($instr eq 'insert') {
     $tex->{'line'}="\n".$next.$tex->{'line'};
   } elsif ($instr eq 'subst') {
-    if ($next=~/^(\\\S+)\s+(.*)$/) {
+    if ($next=~/^(\S+)\s*(\S.*)?$/) {
       my $from=$1;
       my $to=$2;
       $substitutions{$from}=$to;
@@ -228,12 +228,20 @@ sub _parse_tc {
       error($tex,'Invalid %TC:subst format.');
     }
   } elsif ($instr eq 'newcounter') {
-    assert($next=~s/^(\w+)(=(\w+))?\s*//,$tex,'Should have format %TC:newcounter {key}[={like-key}] {description}')
+    assert($next=~s/^(\w+)(=(\w+))?\s*//,$tex,'Expected format: %TC:newcounter {key}[={like-key}] {description}')
     || return;
     my $key=$1;
     my $like=$3;
     if ($next eq '') {$next=$key;}
     add_new_counter($key,$next,$like);
+  } elsif ($instr eq 'log') {
+    assert($next=~s/^(.*)$//,$tex,'Expected format: %TC:log {text or template}') || return;
+    note($tex,1,$1);
+  } elsif ($instr eq 'assert') {
+    assert($next=~s/^(\d+(,\d+)*)(\s+(.*))?$//,$tex,'Expected format: %TC:assert count+count+... {text or template}')
+    || return;
+    my $template=$4 || 'Words counted: {w} in text, {hw} in headers, {ow} other.';
+    assertion_note($tex,$1,$template);
   } elsif ($next=~/^([\\]*\S+)\s+([^\s]+)(\s+(-?\w+))?/) {
     # %TC:instr macro param option
     my $macro=$1;

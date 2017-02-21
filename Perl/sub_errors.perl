@@ -1,14 +1,46 @@
-#::::
-#::: Routines for error handling
+#::: Routines for handling errors, warnings, and notifications
 #::
 #: Routines for external access:
 #:   >*
 #:     warning($tex,$text)
 #:     error($tex,$text)
 #:     error_details($tex,$text)
+#:   >sub_parse
+#:     note($tex,$level,$text,$prefix,$style)
+#:     assertion_note($tex,$checktext,$template)
 #:   >sub_options
 #:     flush_errorbuffer($source)
 #:
+
+# Print note to output
+sub note {
+  my ($tex,$level,$text,$prefix,$style)=@_;
+  if ($printlevel>=$level) {
+    $prefix=(defined $prefix)?$prefix:'%NOTE: ';
+    $style=(defined $style)?$style:'note';
+    $text=count_in_template($tex->{'subcount'},$text);
+    flush_next($tex);
+    line_return(0,$tex);
+    print_style($prefix.$text,$style);
+    flush_next($tex);
+    $blankline=-1;    
+  }
+}
+
+# Compare count with expected and note if assertion fails
+sub assertion_note {
+  my ($tex,$checktext,$template)=@_;
+  my $count=$tex->{'subcount'};
+  my @check=split(/,/,$checktext);
+  for (my $i=scalar @check;$i>0;$i--) {
+    if ($check[$i-1] ne get_count($count,$i)) {
+      my $msg=$template.' [expected:'.join(',',@check).']';
+      note($tex,0,$msg,'%ASSERTION FAILED: ','error');
+      return 1;
+    }
+  }
+  return 0;
+}
 
 # Add warning to list of registered warnings (optionally to be reported at the end)
 sub warning {

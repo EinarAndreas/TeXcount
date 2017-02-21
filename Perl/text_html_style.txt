@@ -26,6 +26,7 @@ body {width:auto;padding:5;margin:5;}
 .cumsum {color: #999; font-size: 80%;}
 .fileinc {color: #696; font-weight:bold;}
 .warning {color: #c00; font-weight: 700;}
+.note {color: #c90; font-weight: bold;}
 
 div.filegroup, div.parse, div.stylehelp, div.count, div.sumcount, div.error {
    border: solid 1px #999; margin: 4pt 0pt; padding: 4pt;

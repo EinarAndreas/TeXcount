@@ -21,6 +21,8 @@ W Make sure QuickReference is included on web page.
 
 
 ############### HISTORY ###############
+- Added: %TC:assert for checking current subcount and writing an error if unexpected.
+- Added: %TC:log with support for template output of current subcount.
 - Added: Use actual terminal width if available.
 - Refer to web page and "texdoc texcount" in -help text.
 - Modify TeXcount help so initial help is short, details through help suboptions.

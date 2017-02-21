@@ -44,7 +44,7 @@ Syntax: texcount.pl [options] files
 
 Use option -help (or just -h) to get help. For more detailed help, the following alternatives exist:
 @ -                      :
-  -man, -help-man          Manual with more extensive help
+  -help-man, -man          Manual with more extensive help
   -help-rule={macro/envir}    Macro/environment handling rule (backslash needed with macros)       
   -help-options (-hopt)    Get list of command line options
   -help-options={substring}    Help on options containing substring
@@ -166,14 +166,14 @@ Parsing instructions may be passed to TeXcount using comments in the LaTeX files
 and are used to control how TeXcount parses the document. The following instructions are used to set parsing rules which will apply to all subsequent parsing (including other files):
   %TC:macro [macro] [param.states]
     |    macro handling rule, no. of and rules for parameters
-  %TC:macroword [macro] [number]
-    |    macro counted as a given number of words
+  %TC:macrocount [macro] [number]
+    |    macro counted as a given number of words (alternative: %TC:macroword)
   %TC:header [macro] [param.states]
-    |    header macro rule, as macro but counts as one header
+    |    header macro rule, as macro but counts as one header (deprecated, use instead: %TC:macro \macro [header])
   %TC:breakmacro [macro] [label]
     |    macro causing subcount break point
-  %TC:group [name] [param.states] [content-state]
-    |    begin-end-group handling rule
+  %TC:envir [name] [param.states] [content-state]
+    |    \begin-\end environment handling rule (alternative: %TC:group)
   %TC:floatinclude [macro] [param.states]
     |    as macro, but also counted inside floats
   %TC:preambleinclude [macro] [param.states]
@@ -188,6 +188,7 @@ Parsing instructions which may be used anywhere are:
   %TC:incbib                include bibliography (same as running with -incbib)
   %TC:ignore                ignore region, end with %TC:endignore
   %TC:insert [code]         insert code for TeXcount to process as TeX code
+  %TC:subst [from] [to]     replace string thoughout document
   %TC:newtemplate           start a new template, ie delete the existing one
   %TC:template [template]   add another line to the template specification
 See the documentation for more details.
