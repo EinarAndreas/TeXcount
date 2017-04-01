@@ -3,7 +3,7 @@ my %GLOBALDATA=
    ('versionnumber'  => $versionnumber
    ,'versiondate'    => $versiondate
    ,'maintainer'     => 'Einar Andreas Rodland'
-   ,'copyrightyears' => '2008-2014'
+   ,'copyrightyears' => '2008-2017'
    ,'website'        => 'http://app.uio.no/ifi/texcount/'
    );
 

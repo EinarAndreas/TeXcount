@@ -19,20 +19,20 @@ if ($^O=~/^MSWin/) {
 }
 
 # Terminal width
-my $terminalwidth=76;
-eval {
+my $terminalwidth;
+defined $terminalwidth || eval {
   require Term::ReadKey;
-  use Term::ReadKey;
+  import Term::ReadKey;
   ($terminalwidth)=GetTerminalSize();
-  if ($terminalwidth<60) {$terminalwidth=60}
-  if ($terminalwidth>120) {$terminalwidth=120}
 };
-
+if (!defined $terminalwidth) {$terminalwidth=76;}
+elsif ($terminalwidth<60) {$terminalwidth=60;}
+elsif ($terminalwidth>120) {$terminalwidth=120;}
 
 ##### Version information
 
-my $versionnumber="3.0.0.250";
-my $versiondate="2017 Feb 22";
+my $versionnumber="3.0.1";
+my $versiondate="2017 Apr 01";
 
 ###### Set global settings and variables
 
@@ -41,7 +41,7 @@ my %GLOBALDATA=
    ('versionnumber'  => $versionnumber
    ,'versiondate'    => $versiondate
    ,'maintainer'     => 'Einar Andreas Rodland'
-   ,'copyrightyears' => '2008-2014'
+   ,'copyrightyears' => '2008-2017'
    ,'website'        => 'http://app.uio.no/ifi/texcount/'
    );
 

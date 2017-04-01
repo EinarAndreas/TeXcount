@@ -19,12 +19,12 @@ if ($^O=~/^MSWin/) {
 }
 
 # Terminal width
-my $terminalwidth=76;
-eval {
+my $terminalwidth;
+defined $terminalwidth || eval {
   require Term::ReadKey;
-  use Term::ReadKey;
+  import Term::ReadKey;
   ($terminalwidth)=GetTerminalSize();
-  if ($terminalwidth<60) {$terminalwidth=60}
-  if ($terminalwidth>120) {$terminalwidth=120}
 };
-
+if (!defined $terminalwidth) {$terminalwidth=76;}
+elsif ($terminalwidth<60) {$terminalwidth=60;}
+elsif ($terminalwidth>120) {$terminalwidth=120;}

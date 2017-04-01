@@ -8,8 +8,8 @@ set_message('Please send information about this error to einarro@ifi.uio.no toge
 
 ##### Version information
 
-my $versionnumber="3.0.0.250";
-my $versiondate="2017 Feb 22";
+my $versionnumber="3.0.1";
+my $versiondate="2017 Apr 01";
 
 ###### Set global settings and variables
 
@@ -18,7 +18,7 @@ my %GLOBALDATA=
    ('versionnumber'  => $versionnumber
    ,'versiondate'    => $versiondate
    ,'maintainer'     => 'Einar Andreas Rodland'
-   ,'copyrightyears' => '2008-2014'
+   ,'copyrightyears' => '2008-2017'
    ,'website'        => 'http://app.uio.no/ifi/texcount/'
    );
 
