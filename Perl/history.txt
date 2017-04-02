@@ -21,6 +21,7 @@ W Make sure QuickReference is included on web page.
 
 
 ############### HISTORY ###############
+>>> Version 3.0.1 (2017 April 2) <<<
 - Added: %TC:assert for checking current subcount and writing an error if unexpected.
 - Added: %TC:log with support for template output of current subcount.
 - Added: Use actual terminal width if available.
@@ -41,7 +42,7 @@ W Make sure QuickReference is included on web page.
 - Fixed: Bug in which option file envir rules only accepted integer argument.
 - Fixed: Bug in relaxed macro option pattern.
 - Fixed: Moved ANSI import to after eval test.
-- Fixed flush_next_gobble_space: Don't gobble %TC: as comment.
+- Fixed: flush_next_gobble_space: Don't gobble %TC: as comment.
 >>> Version 3.0.0.24 (2014 April 11) <<<
 - Fixed specialchars like \mu: need space or other separator after it
 - Added -out-stderr option to output to STDERR

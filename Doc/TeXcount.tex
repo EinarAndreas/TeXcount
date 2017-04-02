@@ -83,6 +83,10 @@ Basically, \TeXcount{} has seven different counts plus an additional file count 
 \end{description}
 These are stored in an array and sometimes referenced by their index: e.g. in the option \code{-sum=} which takes parameter values corresponding to counts 1 to 7. In other contexts, however, like in the \code{-tempate=} or when incrementing specific counters through the \code{\%TC:macrocount} instruction, the counters may be referred to by keywords rather than the indices 0 to 7.
 
+There is also support for adding additional counters using the \TeXcount{} instruction \code{\%TC:newcounter}. These will then be added to the end of the list of counters and should preferably be referred to by name, not index.
+
+\subsubsection{What \TeXcount{} counts as a word}
+
 The primary role is to count the words. It is not entirely clear what should be considered words, so I have had to make some decisions. A sequence of letters is certainly a word. \TeXcount{} also counts acronyms like \textit{e.g.}, dashed words like \textit{over-all}, and \textit{it's} as one word. It also counts numbers as words unless they are placed in a math group. If \TeXcount{} breaks words that contain special characters, you may try the option \code{-relaxed} which extends the range of characters allowed as part of words.
 
 Alternatively, \TeXcount{} may be asked to count the number of letters/characters (not including spaces). It may also be set to count Chinese or Japanese characters.
@@ -134,6 +138,8 @@ Under Linux/Unix, it should be sufficient to run \code{texcount.pl} provided it 
 
 Alternatively, if the above methods do not work, you may have to run \TeXcount{} exclicitly in Perl by executing \code{perl texcount.pl}. You then need to have the \code{perl} executable in the path or give the explicit path.
 
+\subsection{\TeXcount{} command-line options}
+
 For simplicity, I will simply write \code{texcount.pl} in this manual for the code to execute the script. The syntax then becomes
 \codeline{texcount.pl \textit{[options] [files]}}
 where the options may be amongst the following:
@@ -141,6 +147,14 @@ where the options may be amongst the following:
 \input{sub_options}
 
 If more than one file is given, \TeXcount{} will perform the count on each of them printing the results for each, then print the total sum at the end. Note that files are parsed one by one in order of appearance and counts made per file; only afterwards are the totals computed. 
+
+\subsubsection{Option handling alternatives and modifications}
+
+In some cases, eg when running from within a script, the option syntax may cause problems. Two minor modifications have been added.
+
+For set options on the form \code{-[options]=[value]}, you may use the alternative syntax \code{-[option]:[value]} to avoid any problems caused by the equal character.
+
+\TeXcount{} will ignore any option starting with \code{@-} which can either be used to temporarily exclude an option in editing an existing call to \TeXcount{}, or to use the \code{@-[option]} to pass options to scripts without having to remove these before passing the arguments on to \TeXcount{}.
 
 
 \subsection{File encoding}
@@ -398,6 +412,20 @@ Note that macro handling rules are added successively throughout the session: i.
 A few additional \TeXcount{} instructions exist to control the overall parsing and counting:
 
 \input{sub_tc_other}
+
+In addition, in part with debugging in mind, the following \TeXcount{} instructions exist:
+
+\begin{description}
+
+\option[log \opt{text-line}]
+Writes a line of text to the verbose output. Counters may be included in the text using the \code{\{name\}} format.
+
+\option[assert \opt{counts} \opt{text-line}]
+This takes a list of counts separated by comma, and writes the text (which may contain counters on the format \code{\{name\}}) if the asserted counts do not match the actual counts.
+
+\end{description}
+
+These may be subject to change at some later point, although the functionality should remain.
 
 
 \subsection{Parameter and content handling rules}\label{subsec:TC_addrule}
