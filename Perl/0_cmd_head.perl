@@ -6,6 +6,9 @@ use Encode;
 use Text::Wrap;
 use Term::ANSIColor;
 
+# System variables
+my $terminalwidth;
+
 # Conditional package inclusion
 if ($^O=~/^MSWin/) {
   eval {
@@ -18,13 +21,17 @@ if ($^O=~/^MSWin/) {
   }
 }
 
-# Terminal width
-my $terminalwidth;
-defined $terminalwidth || eval {
-  require Term::ReadKey;
-  import Term::ReadKey;
-  ($terminalwidth)=GetTerminalSize();
-};
+# Terminal or not
+if (-t STDOUT) { # If in terminal
+  eval {
+    require Term::ReadKey;
+    import Term::ReadKey;
+    ($terminalwidth)=GetTerminalSize();
+  };
+} else {
+  option_ansi_colours(0);
+}
+
 if (!defined $terminalwidth) {$terminalwidth=76;}
 elsif ($terminalwidth<60) {$terminalwidth=60;}
 elsif ($terminalwidth>120) {$terminalwidth=120;}

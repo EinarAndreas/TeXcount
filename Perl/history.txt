@@ -1,9 +1,9 @@
 ################ TODO ################
 # +=important, -=medium, ?=maybe, H=help, D=documentation, W=web
-D Document better the use of begin{name} to count the {name} environment.
++ Missing: TC-command newcounter etc not handled in options file.
 + Implement %TC conversion rules to handle \begin{envir}.
 W Make sure QuickReference is included on web page.
-+ Implement: count characters including spaces (and punctuation?).
++ Implement: count characters including spaces.
 + In -sum= option, use counter names (not 1,1,1 format).
 - Default inclusion of packages.
 - Add macro *-option gobbling rules for various macros.
@@ -21,6 +21,11 @@ W Make sure QuickReference is included on web page.
 
 
 ############### HISTORY ###############
+>>> Version 3.1 (2017  Sept 16) <<<
+- Added: Option -all-nonspace-characters also counts punctuation.
+- Added: Explanation of beginname to represent \begin{name} as a macro.
+- Fixed: Check if in terminal before trying to detect terminal width.
+- Fixed: Invalid help function call.
 >>> Version 3.0.1 (2017 April 2) <<<
 - Added: %TC:assert for checking current subcount and writing an error if unexpected.
 - Added: %TC:log with support for template output of current subcount.

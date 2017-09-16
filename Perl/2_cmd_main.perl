@@ -60,7 +60,7 @@ sub Check_Arguments {
   my @args=@_;
   if (!@args) {
     print_version();
-    print_short_help();
+    print_help();
     exit;
   }
   for my $arg (@args) {
@@ -300,6 +300,7 @@ sub _parse_optionfile {
 # Parse option file TC options
 sub __optionfile_tc {
   my $arg=shift @_;
+  if ($arg=~/^\%\%/) {return 1;}
   $arg=~s/^\%\s*// || return 0;
   if ($arg=~/^subst\s+(\\\w+)\s+(.*)$/i) {
     $substitutions{$1}=$2;

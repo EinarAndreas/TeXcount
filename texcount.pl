@@ -6,6 +6,9 @@ use Encode;
 use Text::Wrap;
 use Term::ANSIColor;
 
+# System variables
+my $terminalwidth;
+
 # Conditional package inclusion
 if ($^O=~/^MSWin/) {
   eval {
@@ -18,21 +21,25 @@ if ($^O=~/^MSWin/) {
   }
 }
 
-# Terminal width
-my $terminalwidth;
-defined $terminalwidth || eval {
-  require Term::ReadKey;
-  import Term::ReadKey;
-  ($terminalwidth)=GetTerminalSize();
-};
+# Terminal or not
+if (-t STDOUT) { # If in terminal
+  eval {
+    require Term::ReadKey;
+    import Term::ReadKey;
+    ($terminalwidth)=GetTerminalSize();
+  };
+} else {
+  option_ansi_colours(0);
+}
+
 if (!defined $terminalwidth) {$terminalwidth=76;}
 elsif ($terminalwidth<60) {$terminalwidth=60;}
 elsif ($terminalwidth>120) {$terminalwidth=120;}
 
 ##### Version information
 
-my $versionnumber="3.0.1";
-my $versiondate="2017 Apr 01";
+my $versionnumber="3.1";
+my $versiondate="2017 Sep 16";
 
 ###### Set global settings and variables
 
@@ -918,7 +925,7 @@ sub Check_Arguments {
   my @args=@_;
   if (!@args) {
     print_version();
-    print_short_help();
+    print_help();
     exit;
   }
   for my $arg (@args) {
@@ -1158,6 +1165,7 @@ sub _parse_optionfile {
 # Parse option file TC options
 sub __optionfile_tc {
   my $arg=shift @_;
+  if ($arg=~/^\%\%/) {return 1;}
   $arg=~s/^\%\s*// || return 0;
   if ($arg=~/^subst\s+(\\\w+)\s+(.*)$/i) {
     $substitutions{$1}=$2;
@@ -1433,6 +1441,13 @@ sub set_language_option {
     $countdesc[2]='Letters in headers';
     $countdesc[3]='Letters in captions';
     return 'letter';
+  } elsif ($language=~/^all-nonspace-(char|character|letter)s?$/) {
+    @WordPatterns=($NamedWordPattern{'letters'});
+    @AlphabetScripts=qw/Digit Is_alphabetic Is_punctuation/;
+    $countdesc[1]='Characters in text';
+    $countdesc[2]='Characters in headers';
+    $countdesc[3]='Characters in captions';
+    return 'nonspace-characters';
   } else {
     return undef;
   }

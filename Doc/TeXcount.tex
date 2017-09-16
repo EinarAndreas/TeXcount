@@ -8,6 +8,8 @@
 %TC:envir lstlisting [] xall
 %TC:macro url [ignore]
 
+%TC:subst \begin{abstract} \begin{abstract} ABS
+
 \include{macros}
 
 %\parindent=0pt\parskip=8pt
@@ -403,7 +405,7 @@ which \LaTeX{} will interpret as a comment but \TeXcount{} will detect.
 
 Adding your own macro handling rules is relatively simple. While it is fairly easy to edit the script to add more rules, this has the disadvantage that the modifications will be lost if updating to a new version of \TeXcount. A better and more flexible solution is to include instructions to \TeXcount{} in the \LaTeX{} documents, alternatively to make a definition file in which new macro handling rules are defined. The \TeXcount{} instructions for doing this take the form
 \codeline{\%TC:\textit{instruction name parameters \alt{option}}}
-where \code{name} is either the macro name (including backslash) or environment name:
+where in some rules \code{name} is the macro name (including backslash), and some rules use the or environment name. Note that rules that take the macro name as an argument can (usually) by applied to \code{\bs begin\{\textit{name}\}} by specifying it as \code{begin\textit{name}} (no backslash) which is how \TeXcount{} represents \code{\bs begin\{\textit{name}\}} internally.
 %
 \input{sub_addrules}
 

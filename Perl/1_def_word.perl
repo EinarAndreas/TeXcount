@@ -9,7 +9,7 @@
 #: Letter patterns to use, and hash with alternatives:
 #:   $LetterPattern  <-- %NamedLetterPattern
 #: The @ character is later replaced by a letter pattern based
-#: on letters in @AlphabeticScripts.
+#: on letters in @AlphabetScripts.
 #:
 #: Word patterns to use, and hash with alternatives: 
 #:   $WordPattern = join('|',@WordPatterns) <-- %NamedWordPattern

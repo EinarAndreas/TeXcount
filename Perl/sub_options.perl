@@ -123,6 +123,13 @@ sub set_language_option {
     $countdesc[2]='Letters in headers';
     $countdesc[3]='Letters in captions';
     return 'letter';
+  } elsif ($language=~/^all-nonspace-(char|character|letter)s?$/) {
+    @WordPatterns=($NamedWordPattern{'letters'});
+    @AlphabetScripts=qw/Digit Is_alphabetic Is_punctuation/;
+    $countdesc[1]='Characters in text';
+    $countdesc[2]='Characters in headers';
+    $countdesc[3]='Characters in captions';
+    return 'nonspace-characters';
   } else {
     return undef;
   }

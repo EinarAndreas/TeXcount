@@ -96,7 +96,13 @@
 
 \option[-chinese-only, ..., -korean-words-only]As options \code{-chinese}, ..., \code{-korean-words}, but also excludes other alphabets (e.g. letter-based words) and logographic characters.
 
+\option[-count-all, -all]Allow all alphabets, digits, and logograms as letters, whether counting words or characters. This is the default setting.
+
 \option[-char, -letter]Count letters instead of words. This count does not include spaces.
+
+\option[-char-only, -letter-only]Count letters instead of words, but excludes logograms (like chinese characters). This count does not include spaces.
+
+\option[-all-nonspace-char, -all-nonspace-characters]Counts characters instead of words, including letters, logograms, and punctuation, but not including spaces.
 
 \option[-out=]Send output to file. Takes file name as value.
 
