@@ -39,6 +39,7 @@ sub Build_Main {
   SetOutFile(@_);
   AppendFile("0_cmd_head.perl");
   AppendVersion();
+  AppendFile("1__constants.perl","Set global constants and names");
   AppendFile("1__setup.perl","Set global settings and variables");
   AppendFile("1_cmd_setup.perl","Set CMD specific settings and variables");
   AppendFile("1_states.perl","Set state identifiers and methods");
@@ -74,6 +75,7 @@ sub Build_CGI {
   SetOutFile(@_);
   AppendFile("0_cgi_head.perl");
   AppendVersion();
+  AppendFile("1__constants.perl","Set global constants and names");
   AppendFile("1__setup.perl","Set global settings and variables");
   AppendFile("1_cgi_setup.perl","Set CGI specific settings and variables");
   AppendFile("1_states.perl","Set state identifiers and methods");
@@ -135,7 +137,7 @@ sub AppendFile {
     elsif ($line=~/^\s*#{3,}\[\[INCLUDE:(.*)\]\]$/) {print FH IncludeFile($1);}
     else {print FH $line;}
   }
-  print FH "\n";
+  print FH "\n\n";
   close(INFILE);
 }
 

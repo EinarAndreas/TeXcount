@@ -1,19 +1,10 @@
-### Global data about TeXcount
-my %GLOBALDATA=
-   ('versionnumber'  => $versionnumber
-   ,'versiondate'    => $versiondate
-   ,'maintainer'     => 'Einar Andreas Rodland'
-   ,'copyrightyears' => '2008-2017'
-   ,'website'        => 'http://app.uio.no/ifi/texcount/'
-   );
-
 ### Options and states
 
 # Outer object (for error reports not added by a TeX object)
 my $Main=getMain();
 
 # Global options and settings
-my $htmlstyle=0; # Flag to print HTML
+my $htmlstyle=$HTML_NONE; # Flag to print HTML
 my $texcodeoutput=0; # Flag to convert output to valid TeX text
 my $encoding=undef; # Selected input encoding (default will be guess)
 my @encodingGuessOrder=qw/ascii utf8 latin1/; # Encoding guessing order
@@ -22,7 +13,7 @@ my @AlphabetScripts=qw/Digit Is_alphabetic/; # Letters minus logograms: defined 
 my @LogogramScripts=qw/Ideographic Katakana Hiragana Thai Lao Hangul/; # Scripts counted as whole words
 
 # Parsing rules options
-my $includeTeX=0; # Flag to parse included files
+my $includeTeX=$INCLUDE_NONE; # Flag to parse included files
 my $includeBibliography=0; # Flag to include bibliography
 my %substitutions; # Substitutions to make globally
 my %IncludedPackages; # List of included packages

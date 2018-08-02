@@ -353,6 +353,7 @@ sub _parse_include_file {
   my %params;
   flush_next($tex);
   $params{'<type>'}=$includetype;
+  $params{'SUFFICES'}=[''];
   if ($includetype eq '<bbl>') {
     _parse_include_bbl($tex,$state,\%params);
     return;
@@ -367,6 +368,7 @@ sub _parse_include_file {
     };
     print_style($1,$style);
     $file=$2;
+    if (!($file=~/\.tex$/i)) {$params{'SUFFICES'}=['.tex',''];}
   }
   else {
     foreach my $param (split(/\s+|,/,$includetype)) {
@@ -378,12 +380,12 @@ sub _parse_include_file {
       print_style($1,'ignore');
       print_style($2,$style);
       print_style($3,'ignore');
-      if ($param eq 'file') {$file=$2;}
-      elsif ($param eq 'texfile') {
+      if ($param eq 'file') {
         $file=$2;
-        if ($file!~/\.tex$/i) {$file.='.tex';}
-      }
-      else {$params{$param}=$2;}
+        if (!($file=~/\.tex$/i)) {$params{'SUFFICES'}=['.tex',''];}
+      } elsif ($param eq 'texfile') {
+        $file=$2.'.tex';
+      } else {$params{$param}=$2;}
     }
   }
   if (!defined $file) {

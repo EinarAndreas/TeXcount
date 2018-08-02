@@ -71,7 +71,7 @@ sub get_latex_file {
 
 # Set options based on CGI parameters
 sub Set_Options {
-  $htmlstyle=2;
+  $htmlstyle=$HTML_FULL;
   if (param('latexcode')) {$encoding='utf8';}
   else {$encoding=GetParam('fileencoding','guess');}
   set_verbosity_options(GetParam('verbosity','3','[0-4]'));

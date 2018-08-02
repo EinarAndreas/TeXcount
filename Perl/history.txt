@@ -1,8 +1,9 @@
 ################ TODO ################
 # +=important, -=medium, ?=maybe, H=help, D=documentation, W=web
++ Options should not allow partial group/math delimiters etc.
++ Add rule for \let. Problem with \letX=Y format.
 + Missing: TC-command newcounter etc not handled in options file.
 + Implement %TC conversion rules to handle \begin{envir}.
-W Make sure QuickReference is included on web page.
 + Implement: count characters including spaces.
 + In -sum= option, use counter names (not 1,1,1 format).
 - Default inclusion of packages.
@@ -21,6 +22,11 @@ W Make sure QuickReference is included on web page.
 
 
 ############### HISTORY ###############
+- Improved HTML layout a little with div.sumgroup around total sum; made CSS example.
+- Started naming constants: $HTML_*, $INCLUDE_*, ...
+- Added 1__constants.perl to define constants and names.
+- Fixed: File inclusion search order, suffix now takes array of alternatives.
+- Added partial support for package etoolbox and xparse.
 >>> Version 3.1 (2017  Sept 16) <<<
 - Added: Option -all-nonspace-characters also counts punctuation.
 - Added: Explanation of beginname to represent \begin{name} as a macro.
@@ -117,7 +123,7 @@ W Make sure QuickReference is included on web page.
 - Added: Separate path (-auxdir=) to use with bibliography.
 - Added: The import package.
 - Added: Handling of file inclusion parameters.
-- Added: Search path to TeXcode object.
+- Added: File inclusion search path added to TeXcode object.
 - Added: Rules for parsing optional parameters.
 - Added: %TC:newcounter for adding new counters.
 - Use keys to specify counters in template.

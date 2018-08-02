@@ -9,9 +9,10 @@
 
 # Print count summary for a count object
 sub print_count {
-  my ($count,$class)=@_;
+  my ($count,$class,$title)=@_;
   line_return(0);
-  if ($htmlstyle) {print "<div class='".($class||'count')."'>\n";}  
+  if ($htmlstyle) {print "<div class='".($class||'count')."'>\n";}
+  if (defined $title) {formatprint($title."\n",'h2');}
   if ($outputtemplate) {
     _print_count_template($count,$outputtemplate);
   } elsif ($briefsum && @sumweights) {

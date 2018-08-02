@@ -15,7 +15,6 @@ sub include_file {
   my %params=%$refparam;
   my $type=$params{'<type>'};
   my @paths=@{$tex->{'PATH'}};
-  my $filepath;
   if ($type eq '<bbl>' && defined $auxdir) {
     $auxdir=~s/([\\\/])*$/\//;
     if (defined $globalworkdir) {@paths=[$auxdir];}
@@ -27,22 +26,23 @@ sub include_file {
     if ($key eq 'dir') {unshift @paths,$workdir.$value;}
     elsif ($key eq 'subdir') {unshift @paths,$paths[0].$value;}
   }
+  # Decide full file path
+  my $filepath;
   if ($file=~/^(\w:)?[\\\/]/) {$filepath=$file;}
   else {
-    $filepath=_find_file_in_path($tex,$file,@paths) || BLOCK {
+    $filepath=_find_file_in_path($tex,$file,\@paths,$params{'SUFFICES'}) || BLOCK {
       error($tex,'File '.$file.' not found in path ['.join(';',@paths).'].');
       return;
     };
   }
-  if ($includeTeX==2) {
+  if ($includeTeX==$INCLUDE_MERGE) {
     my $bincode=read_binary($filepath) || BLOCK {
       error($tex,"File $filepath not readable.");
       return;
     };
     flush_next($tex);
     line_return(0,$tex);
-    # DELETE: prepend_code($tex,$bincode,$file);
-    my $texstate=texcode_insert_text($tex,$bincode,$file,@paths);
+    my $texstate=texcode_insert_text($tex,$bincode,$filepath,@paths);
     parse_all($tex,$state);
     texcode_restore_state($tex,$texstate);
   } else {
@@ -52,14 +52,15 @@ sub include_file {
 
 # Seach path list to find file
 sub _find_file_in_path {
-  my $tex=shift @_;
-  my $file=shift @_;
-  foreach my $path (@_) {
-    if ($path && $path!~/[\\\/]$/) {$path.='/';}
-    my $filepath=$path.$file;
-    if (-e $filepath) {return $filepath;}
-    elsif ($filepath=~/\.tex$/i) {}
-    elsif (-e $filepath.'.tex') {return $filepath.'.tex';}
+  my ($tex,$file,$paths,$suffices)=@_;
+  foreach my $suffix (@{$suffices}) {
+    foreach my $path (@{$paths}) {
+      if ($path && $path!~/[\\\/]$/) {$path.='/';}
+      my $filepath=$path.$file.$suffix;
+      if (-e $filepath && ! -d $filepath) {return $filepath;}
+      # DELETE: elsif ($filepath=~/\.tex$/i) {}
+      # DELETE: elsif (-e $filepath.'.tex') {return $filepath.'.tex';}
+    }
   }
   return undef;
 }
@@ -70,8 +71,12 @@ sub conditional_print_total {
   if ($totalflag || number_of_subcounts($sumcount)>1) {
     if ($totalflag && $briefsum && @sumweights) {
       print get_sum_count($sumcount),"\n";
+    } elsif ($htmlstyle) {
+      print "<div class='sumgroup'>\n";
+      formatprint('Total word count','h2');
+      print_count($sumcount,'sumcount');
+      print "</div>\n";
     } else {
-      if ($htmlstyle) {formatprint('Total word count','h2');}
       print_count($sumcount,'sumcount');
     }
   }

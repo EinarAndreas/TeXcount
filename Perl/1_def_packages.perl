@@ -41,6 +41,11 @@ $PackageTeXmacro{'color'}={
 # Rules for package endnotes
 $PackageTeXmacro{'endnotes'}={'\endnote'=>['oword'],'\endnotetext'=>['oword'],'\addtoendnotetext'=>['oword']};
 
+# Rules for package etoolbox
+$PackageTeXmacro{'etoolbox'}={'\apptocmd'=>['xxx','ignore','ignore','ignore'],
+    '\pretocmd'=>['xxx','ignore','ignore','ignore'],
+    '\patchcmd'=>['xxx','xxx','xxx','ignore','ignore']};
+
 # Rules for package fancyhdr
 $PackageTeXmacro{'fancyhdr'}={
     '\fancyhf'=>1,'\lhead'=>1,'\chead'=>1,'\rhead'=>1,'\lfoot'=>1,'\cfoot'=>1,'\rfoot'=>1};
@@ -131,3 +136,5 @@ $PackageTeXmacro{'xcolor'}={
     '\definecolor'=>3,\'DefineNamedColor'=>4,
     '\colorlet'=>2};
 
+# Rules for package xparse
+$PackageSubpackage{'xparse'}=['etoolbox'];

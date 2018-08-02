@@ -15,7 +15,7 @@
 # Apply options to set values
 sub Apply_Options {
   apply_encoding_options();
-  if ($htmlstyle>1) {html_head();}
+  if ($htmlstyle==$HTML_FULL) {html_head();}
   flush_errorbuffer($Main);
   apply_language_options();
   if ($includeBibliography) {apply_include_bibliography();}

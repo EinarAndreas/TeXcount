@@ -146,9 +146,9 @@ sub parse_options_preset {
 sub parse_options_parsing {
   my $arg=shift @_;
   if    ($arg eq '-') {$fileFromSTDIN=1;}
-  elsif ($arg eq '-merge') {$includeTeX=2;}
-  elsif ($arg eq '-inc') {$includeTeX=1;}
-  elsif ($arg eq '-noinc') {$includeTeX=0;}
+  elsif ($arg eq '-merge') {$includeTeX=$INCLUDE_MERGE;}
+  elsif ($arg eq '-inc') {$includeTeX=$INCLUDE_AFTER;}
+  elsif ($arg eq '-noinc') {$includeTeX=$INCLUDE_NONE;}
   elsif ($arg =~/^-(includepackage|incpackage|package|pack)=(.*)$/) {include_package($2);}
   elsif ($arg eq '-incbib') {$includeBibliography=1;}
   elsif ($arg eq '-nobib') {$includeBibliography=0;}
@@ -264,8 +264,8 @@ sub parse_options_format {
   elsif ($arg eq '-total') {$totalflag=1;}
   elsif ($arg eq '-0') {$briefsum=1;$totalflag=1;$printlevel=-1;$finalLineBreak=0;}
   elsif ($arg eq '-1') {$briefsum=1;$totalflag=1;$printlevel=-1;}
-  elsif ($arg eq '-htmlcore' ) {option_ansi_colours(0);$htmlstyle=1;}
-  elsif ($arg eq '-html' ) {option_ansi_colours(0);$htmlstyle=2;}
+  elsif ($arg eq '-htmlcore' ) {option_ansi_colours(0);$htmlstyle=$HTML_CORE;}
+  elsif ($arg eq '-html' ) {option_ansi_colours(0);$htmlstyle=$HTML_FULL;}
   elsif ($arg eq '-tex' ) {option_ansi_colours(0);$texcodeoutput=1;}
   elsif ($arg =~/^\-(nocol|nc$)/) {option_ansi_colours(0);}
   elsif ($arg =~/^\-(col)$/) {option_ansi_colours(1);}
@@ -354,8 +354,8 @@ sub parse_file {
     _add_file($filetotalcount,$f,'Included file: '.$f->[0]);
   }
   if (!$totalflag && get_count($filetotalcount,$CNT_FILE)>1) {
-    if ($htmlstyle) {formatprint("Sum of files: $file\n",'h2');}
-    print_count($filetotalcount,'sumcount');
+    #if ($htmlstyle) {formatprint("Sum of files: $file\n",'h2');}
+    print_count($filetotalcount,'sumcount',"Sum of files: $file");
   }
   if ($htmlstyle && ($printlevel>0 || !$totalflag)) {print "</div>\n\n";}
   return $filetotalcount;

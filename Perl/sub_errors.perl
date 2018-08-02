@@ -32,9 +32,11 @@ sub assertion_note {
   my ($tex,$checktext,$template)=@_;
   my $count=$tex->{'subcount'};
   my @check=split(/,/,$checktext);
+  my @actual;
+  for (my $i=scalar @check;$i>0;$i--) {$actual[$i-1]=get_count($count,$i);}
   for (my $i=scalar @check;$i>0;$i--) {
-    if ($check[$i-1] ne get_count($count,$i)) {
-      my $msg=$template.' [expected:'.join(',',@check).']';
+    if ($check[$i-1] ne $actual[$i-1]) {
+      my $msg=$template.' [expected:'.join('+',@check).'; found: '.join('+',@actual).']';
       note($tex,0,$msg,'%ASSERTION FAILED: ','error');
       return 1;
     }

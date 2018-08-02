@@ -10,7 +10,7 @@
 
 # Close the output (STDOUT), e.g. adding HTML tail
 sub Close_Output {
-  if ($htmlstyle>1) {
+  if ($htmlstyle==$HTML_FULL) {
     html_tail();
   }
   close STDOUT;

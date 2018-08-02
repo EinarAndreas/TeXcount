@@ -135,9 +135,9 @@ add_keys_to_hash(\%TeXmacro,['nooptions'],
 my %TeXmacrocount=('\LaTeX'=>1,'\TeX'=>1,'beginabstract'=>['header','headerword']);
 
 ### Macros for including tex files
-# Allows \macro{file} or \macro file. If the value is 0, the filename will
-# be used as is; if it is 1, the filetype .tex will be added if the
-# filename is without filetype; if it is 2, the filetype .tex will be added.
+# Allows \macro{file} to include file; or \macro file if of type 'input'.
+# Main types are 'input' for \input, 'texfile' which adds '.tex', and
+# 'file' which adds '.tex' if missing.
 my %TeXfileinclude=('\input'=>'input','\include'=>'texfile');
 
 ### Convert state keys to codes
