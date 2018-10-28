@@ -39,8 +39,8 @@ elsif ($terminalwidth>120) {$terminalwidth=120;}
 
 ##### Version information
 
-my $versionnumber="3.1.0.49";
-my $versiondate="2018 Jun 28";
+my $versionnumber="3.1.1";
+my $versiondate="2018 Oct 28";
 
 ###### Set global constants and names
 
@@ -49,7 +49,7 @@ my %GLOBALDATA=
    ('versionnumber'  => $versionnumber
    ,'versiondate'    => $versiondate
    ,'maintainer'     => 'Einar Andreas Rodland'
-   ,'copyrightyears' => '2008-2017'
+   ,'copyrightyears' => '2008-2018'
    ,'website'        => 'http://app.uio.no/ifi/texcount/'
    );
 
@@ -2732,7 +2732,7 @@ sub _get_next_token {
       if ($match=~/^$WordPattern$/) {return __set_token($tex,$match,$TOKEN_WORD);}
       else {return __set_token($tex,$match,$TOKEN_SYMBOL);}
     } elsif ($ch eq '\\') {
-      if ($tex->{'line'}=~s/^(\\[{}%])//) {return __set_token($tex,$1,$TOKEN_SYMBOL);}
+      if ($tex->{'line'}=~s/^(\\[\{\}%])//) {return __set_token($tex,$1,$TOKEN_SYMBOL);}
       if ($tex->{'line'}=~s/^(\\([a-zA-Z@]+|[^a-zA-Z@[:^print:]]))//) {return __set_token($tex,$1,$TOKEN_MACRO);}
       return __get_chtoken($tex,$ch,$TOKEN_END);
     } elsif ($ch eq '$') {
@@ -2974,7 +2974,7 @@ sub __lc_merge {
 sub __word_class {
   my ($wd,$regs)=@_;
   my @classes;
-  $wd=~s/\\\w+({})?/\\{}/g;
+  $wd=~s/\\\w+(\{\})?/\\{}/g;
   foreach my $name (keys %{$regs}) {
     if ($wd=~$regs->{$name}) {push @classes,$name;}
   }
@@ -3065,7 +3065,7 @@ sub text_to_print {
     $text=~s/[ \t]{2}/\&nbsp; /g;
   } elsif ($texcodeoutput) {
     $text=~s/\\/\\textbackslash¤/g;
-    $text=~s/([%{}])/\\$1/g;
+    $text=~s/([%\{\}])/\\$1/g;
     $text=~s/¤/{}/g;
   }
   return $text;

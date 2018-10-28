@@ -15,10 +15,10 @@
 \catcode`\_=12
 
 % Set version number
-\newcommand\version{$3.1$}
+\newcommand\version{$3.1.1$}
 
 \newcommand\copyrightfootnote{
-\footnotetext{Copyright (2008-2017) of Einar Andreas R{\o}dland, distributed
+\footnotetext{Copyright (2008-2018) of Einar Andreas R{\o}dland, distributed
 under the \LaTeX{} Project Public License (LPPL).}
 }
 
@@ -45,23 +45,23 @@ under the \LaTeX{} Project Public License (LPPL).}
 \newcommand\ContentsNote[1]{\addtocontents{toc}{\string\marginpar{\textsf{\color{red}\tiny #1}}}}
 
 % Notabene: margin note
-%TC:macro NB 1
+%TC:macro \NB 1
 \newcommand\NB[1]{\ContentsNote{NB}\marginpar{\textsf{\tiny#1}}}
 
 % Mark text as a notification
-%TC:macro NOTE [text]
+%TC:macro \NOTE [text]
 \newcommand\NOTE[1]{\textit{\color{red}#1}}
 
 % Mark text for update
-%TC:macro UPDATE [text]
+%TC:macro \UPDATE [text]
 \newcommand\UPDATE[1]{\ContentsNote{UPDATE}\textit{\textbf{\color{red}This needs to be updated:} {\color{blue}#1}}}
 
 % Mark text as a notification
-%TC:macro TODO [text]
+%TC:macro \TODO [text]
 \newcommand\TODO[1]{\ContentsNote{TODO}\textit{\textbf{\color{red}#1}}}
 
 % BUG
-%TC:macro BUG [text]
+%TC:macro \BUG [text]
 \newcommand\BUG[1]{{\color{red}#1}}
 
 \makeatletter

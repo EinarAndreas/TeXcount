@@ -80,7 +80,7 @@ sub __lc_merge {
 sub __word_class {
   my ($wd,$regs)=@_;
   my @classes;
-  $wd=~s/\\\w+({})?/\\{}/g;
+  $wd=~s/\\\w+(\{\})?/\\{}/g;
   foreach my $name (keys %{$regs}) {
     if ($wd=~$regs->{$name}) {push @classes,$name;}
   }

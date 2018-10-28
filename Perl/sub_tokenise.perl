@@ -54,7 +54,7 @@ sub _get_next_token {
       if ($match=~/^$WordPattern$/) {return __set_token($tex,$match,$TOKEN_WORD);}
       else {return __set_token($tex,$match,$TOKEN_SYMBOL);}
     } elsif ($ch eq '\\') {
-      if ($tex->{'line'}=~s/^(\\[{}%])//) {return __set_token($tex,$1,$TOKEN_SYMBOL);}
+      if ($tex->{'line'}=~s/^(\\[\{\}%])//) {return __set_token($tex,$1,$TOKEN_SYMBOL);}
       if ($tex->{'line'}=~s/^(\\([a-zA-Z@]+|[^a-zA-Z@[:^print:]]))//) {return __set_token($tex,$1,$TOKEN_MACRO);}
       return __get_chtoken($tex,$ch,$TOKEN_END);
     } elsif ($ch eq '$') {

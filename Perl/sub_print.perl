@@ -31,7 +31,7 @@ sub text_to_print {
     $text=~s/[ \t]{2}/\&nbsp; /g;
   } elsif ($texcodeoutput) {
     $text=~s/\\/\\textbackslash¤/g;
-    $text=~s/([%{}])/\\$1/g;
+    $text=~s/([%\{\}])/\\$1/g;
     $text=~s/¤/{}/g;
   }
   return $text;

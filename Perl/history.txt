@@ -1,5 +1,8 @@
 ################ TODO ################
 # +=important, -=medium, ?=maybe, H=help, D=documentation, W=web
+D Factor out version and year: use version file.
++ Check copyright year in 1__constants (or auto-update).
++ Bug: Nested subfolder file inclusion using -inc vs -merge.
 + Options should not allow partial group/math delimiters etc.
 + Add rule for \let. Problem with \letX=Y format.
 + Missing: TC-command newcounter etc not handled in options file.
@@ -22,6 +25,7 @@
 
 
 ############### HISTORY ###############
+- Fixed: Escaped all braces in regexes.
 - Improved HTML layout a little with div.sumgroup around total sum; made CSS example.
 - Started naming constants: $HTML_*, $INCLUDE_*, ...
 - Added 1__constants.perl to define constants and names.
