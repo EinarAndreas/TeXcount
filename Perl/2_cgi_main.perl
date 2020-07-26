@@ -21,7 +21,7 @@ sub MAIN {
   print "Content-Type: text/html\n\n";
   Set_Options();
   Apply_Options();
-  conditional_print_style_list();
+  if ($showcodes>0) {print_style_list();}
   my $tex;
   if (my $bincode=param('latexcode')) {
     $tex=TeXcode($bincode);
@@ -38,6 +38,7 @@ sub MAIN {
   my $filecount=next_subcount($tex);
   print_count($filecount);
   Report_Errors();
+  if ($showcodes<0) {print_style_list();}
   if ($optionWordFreq || $optionWordClassFreq) {print_word_freq();}
   Close_Output();
   if ( (defined $LOGfilename) && open(my $LOG,">>$LOGfilename") ) {

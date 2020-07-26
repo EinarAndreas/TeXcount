@@ -26,7 +26,7 @@ my $specialchars='\\\\('.join('|',@LetterMacros).')(\{\}|\s+|\b)';
 my $modifiedchars='\\\\[\'\"\`\~\^\=](@|\{@\})';
 my %NamedLetterPattern;
 $NamedLetterPattern{'restricted'}='@';
-$NamedLetterPattern{'default'}='('.join('|','@',$modifiedchars,$specialchars).')';
+$NamedLetterPattern{'default'}='('.join('|','@',$modifiedchars,$specialchars,'[\.\,]\d').')';
 $NamedLetterPattern{'relaxed'}=$NamedLetterPattern{'default'};
 my $LetterPattern=$NamedLetterPattern{'default'};
 
@@ -38,7 +38,7 @@ my $LetterPattern=$NamedLetterPattern{'default'};
 # alphabet/logogram settings.
 my %NamedWordPattern;
 $NamedWordPattern{'letters'}='@';
-$NamedWordPattern{'words'}='(@+|@+\{@+\}|\{@+\}@+)([\-\'\.]?(@+|\{@+\}))*';
+$NamedWordPattern{'words'}='(@+|@+\{@+\}|\{@+\}@+)([\-\'\.\x{200C}]?(@+|\{@+\}))*';
 my @WordPatterns=($NamedWordPattern{'words'});
 my $WordPattern; # Regex matching a word (defined in apply_language_options())
 

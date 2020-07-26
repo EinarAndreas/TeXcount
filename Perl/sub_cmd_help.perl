@@ -66,6 +66,73 @@ sub print_help_options_subset {
   }
 }
 
+# List all rules
+sub print_help_all_rules {
+  print "### Overview of TeXcount rules (except some hardcoded rules)\n";
+  _print_all_rules(\%TeXpackageinc, \%TeXpreamble, \%TeXfloatinc, \%TeXmacro, \%TeXenvir, \%TeXmacrocount);
+  my %packages;
+  __aggregate_package_rules(\%packages,0,\%PackageTeXpackageinc);
+  __aggregate_package_rules(\%packages,1,\%PackageTeXpreamble);
+  __aggregate_package_rules(\%packages,2,\%PackageTeXfloatinc);
+  __aggregate_package_rules(\%packages,3,\%PackageTeXmacro);
+  __aggregate_package_rules(\%packages,4,\%PackageTeXenvir);
+  __aggregate_package_rules(\%packages,5,\%PackageTeXmacrocount);
+  __aggregate_package_rules(\%packages,6,\%PackageSubpackage);
+  foreach (sort keys %packages) {
+    if (defined $PackageSubpackage{$_}) {
+      print "## Package: $_ (includes: ",join(',',@{$PackageSubpackage{$_}}),")\n";
+    } else {
+      print "## Package: $_\n";
+    }
+    _print_all_rules(@{$packages{$_}});
+  }
+  print "### Done!\n";
+}
+
+sub __aggregate_package_rules {
+  my ($packages,$index,$hash) = @_;
+  foreach my $pck (keys %$hash) {
+    if (!defined $packages->{$pck}) {$packages->{$pck} = [];}
+    ${$packages->{$pck}}[$index] = $hash->{$pck};
+  }
+}
+
+sub _print_all_rules {
+  my ($packageinc, $preamble, $floatinc, $macro, $envir, $macrocount) = @_;
+  __print_rules('Include package', $packageinc, {}, \%state2key);
+  __print_rules('Preamble macros', $preamble, {}, \%state2key);
+  __print_rules('Float included macros', $floatinc, {}, \%state2key);
+  __print_rules('Macros', $macro, {}, \%state2key);
+  __print_rules('Environment content (see begin{envir} for arguments)', $envir, \%state2key);
+  __print_rules('Macrocount', $macrocount, {}, \%state2key);
+}
+
+# Print title + hash rules using list of translations
+sub __print_rules {
+  my ($title,$hash,@translations) = @_;
+  if (!($hash && %$hash)) {return;}
+  print "# ",$title,"\n";
+  foreach (sort keys %$hash) {
+    print $_," ",_to_string($hash->{$_},@translations),"\n";
+  }
+}
+
+# Print rule for value using list of translations
+sub _to_string {
+  my ($x,$tr,@trs) = @_;
+  my @strs;
+  if (defined $tr->{$x}) {
+    return $tr->{$x};
+  } elsif (ref($x) eq 'ARRAY') {
+    foreach (@{$x}) {
+      push @strs,_to_string($_,@trs,\{});
+    }
+    return '('.join(',',@strs).')';
+  } else {
+    return "$x";
+  }
+}
+
 # Print help on specific macro or environment
 sub print_help_on_rule {
   my $arg=shift @_;

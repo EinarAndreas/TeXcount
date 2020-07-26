@@ -33,7 +33,7 @@ TeXcount version ${versionnumber}
 Copyright ${copyrightyears} ${maintainer}
 
 The TeXcount script is published under the LaTeX Project Public License (LPPL)
-    http://www.latex-project.org/lppl.txt
+    https://www.latex-project.org/lppl.txt
 which grants you, the user, the right to use, modify and distribute the script. However, if the script is modified, you must change its name or use other technical means to avoid confusion.
 
 The script has LPPL status "maintained" with ${maintainer} being the current maintainer.

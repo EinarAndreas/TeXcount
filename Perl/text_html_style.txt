@@ -6,7 +6,7 @@ body {width:auto;padding:5;margin:5;}
 .word {color: #009}
 .hword {color: #009; font-weight: 700;}
 .oword {color: #009; font-style: italic;}
-.altwd {color: #00c; font-style: oblique;}
+.altwd {color: #c0c; font-style: oblique;}
 .cmd {color: #c00;}
 .exclcmd {color: #f99;}
 .option {color: #cc0;}

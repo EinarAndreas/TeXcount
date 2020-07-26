@@ -148,6 +148,15 @@ my %state2cnt=(
     $STATE_TEXT_HEADER => $CNT_WORDS_HEADER,
     $STATE_TEXT_FLOAT  => $CNT_WORDS_OTHER);
 
+# Word type may be used to modify counting state
+my %wordtype=(
+  'number' => qr/^\-?[\d\,\.]+$/,
+  'mixed'  => qr/(\d[^\d]|[^\d]\d)/,
+  'nonum'  => qr/^[^\d]*$/);
+
+# For each state, map wordtype to changed state
+my %wordtype2state=();
+
 # Transition state mapped to content state and counter
 my %transition2state=(
     $STATE_TO_HEADER      => [$STATE_TEXT_HEADER,$CNT_COUNT_HEADER],

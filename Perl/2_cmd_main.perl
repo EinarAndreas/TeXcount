@@ -30,14 +30,15 @@ sub MAIN {
     if ($showVersion && !$htmlstyle && !($briefsum && $totalflag)) {
       print "\n=== LaTeX word count (TeXcount version $versionnumber) ===\n\n";
     }
-    conditional_print_style_list();
+    if ($showcodes>0) {print_style_list();}
     my $totalcount=Parse_file_list(@toplevelfiles);
     conditional_print_total($totalcount);
     Report_Errors();
     if ($optionWordFreq || $optionWordClassFreq) {print_word_freq();}
+    if ($showcodes<0) {print_style_list();}
     if ($optionMacroStat) {print_macro_stat();}
   } elsif ($showcodes>1) {
-    conditional_print_style_list();
+    print_style_list();
   } else {
     error($Main,'No files specified.');
   }
@@ -80,6 +81,9 @@ sub Check_Arguments {
       exit;
     } elsif ($arg=~/^-h(-rule)?=(.*)$/) {
       print_help_on_rule($2);
+      exit;
+    } elsif ($arg=~/^-h(-all-rules|-rules-all)(=(.*))?$/) {
+      print_help_all_rules($3);
       exit;
     } elsif ($arg=~/^-h-styles?$/) {
       print_help_on_styles();
@@ -270,6 +274,8 @@ sub parse_options_format {
   elsif ($arg =~/^\-(nocol|nc$)/) {option_ansi_colours(0);}
   elsif ($arg =~/^\-(col)$/) {option_ansi_colours(1);}
   elsif ($arg eq '-codes') {$showcodes=2;}
+  elsif ($arg eq '-topcodes') {$showcodes=1;}
+  elsif ($arg eq '-bottomcodes') {$showcodes=-1;}
   elsif ($arg eq '-nocodes') {$showcodes=0;}
   elsif ($arg =~/^-htmlfile=(.+)$/) {$HTMLfile=$1;}
   elsif ($arg =~/^-cssfile=(.+)$/) {$CSSfile=$1;}

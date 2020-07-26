@@ -30,7 +30,7 @@ my $defaultVerbosity='0'; # Specification of default verbose output style
 my $defaultprintlevel=0; # Flag indicating default level of verbose output
 my $printlevel=undef; # Flag indicating level of verbose output
 my $showstates=0; # Flag to show internal state in verbose log
-my $showcodes=1; # Flag to show overview of colour codes (2=force)
+my $showcodes=-1; # Flag to show overview of colour codes (-1=bottom,0=none,1=top,2=force)
 my $showsubcounts=0; # Write subcounts if #>this, or not (if 0)
 my $separatorstyleregex='^word'; # Styles (regex) after which separator should be added
 my $separator=''; # Separator to add after words/tokens

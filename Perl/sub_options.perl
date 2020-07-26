@@ -18,6 +18,7 @@ sub Apply_Options {
   if ($htmlstyle==$HTML_FULL) {html_head();}
   flush_errorbuffer($Main);
   apply_language_options();
+  apply_include_default_packages();
   if ($includeBibliography) {apply_include_bibliography();}
   if ($showcodes>1 && !($STYLE{'<printlevel>'})) {%STYLE=%{$STYLES{'All'}};} 
   if ($showstates) {set_verbosity_options('+States');}
@@ -176,6 +177,14 @@ sub apply_language_options {
   $WordPattern=join '|',@WordPatterns;
 }
 
+# Apply default package inclusion
+sub apply_include_default_packages {
+  foreach (@DefaultPackages) {
+    print STDERR "Default include: $_\n";
+    include_package($_);
+  }
+}
+
 # Apply incbib rule
 sub apply_include_bibliography {
   include_package('%incbib');
@@ -225,7 +234,7 @@ sub tc_macro_param_option {
     # No parameter checking here, just pass on; errors reported when used instead.
     $param=~s/^\[(.*)\]$/$1/;
     $param=~s/,/ /g;
-    assert($param=~/^\w+(\s\w+)*$/,$tex,'Invalid %TC:fileinclude parameter: '.$param)
+    assert($param=~/^\w+(\s\w+)*$/||0,$tex,'Invalid %TC:fileinclude parameter: '.$param)
     || return 0;
     $TeXfileinclude{$macro}=$param;
   }

@@ -1,5 +1,9 @@
 ### Package rule definitions
 
+# Packages included by default
+my @DefaultPackages=('amsmath');
+
+# Hashes storing package specific rules
 my %PackageTeXpreamble=(); # TeXpreamble definitions per package
 my %PackageTeXpackageinc=(); # TeXpackageinc definitions per package
 my %PackageTeXfloatinc=(); # TeXfloatinc definitions per package
@@ -20,6 +24,16 @@ $PackageTeXfileinclude{'%incbib'}={'\bibliography'=>'<bbl>'};
 $PackageTeXenvir{'alltt'}={
     'alltt'=>'xall'};
 
+# Rules for package amsmath
+$PackageTeXenvir{'amsmath'}={
+    'multline'=>'displaymath','multline*'=>'displaymath',
+    'gather'=>'displaymath','gather*'=>'displaymath',
+    'align'=>'displaymath','align*'=>'displaymath',
+    'flalign'=>'displaymath','flalign*'=>'displaymath',
+    'alignat'=>'displaymath','alignat*'=>'displaymath'};
+$PackageTeXmacro{'amsmath'}={
+    'beginalignat'=>1, 'beginalignat*'=>1};
+
 # Rules for package babel
 # NB: Only core macros implemented, those expected found in regular documents
 $PackageTeXenvir{'babel'}={
@@ -27,6 +41,16 @@ $PackageTeXenvir{'babel'}={
 $PackageTeXmacro{'babel'}={
     '\selectlanguage'=>1,'\foreignlanguage'=>['ignore','text'],
     'beginotherlanguage'=>1,'beginotherlanguage*'=>1};
+
+# Rules for package cleveref
+$PackageTeXmacro{'cleveref'}={
+    '\cref'=>['ignore'], '\Cref'=>['ignore'],
+    '\cref*'=>['ignore'], '\Cref*'=>['ignore'],
+    '\crefrange'=>['ignore','ignore'], '\Crefrange'=>['ignore','ignore'],
+    '\crefrange*'=>['ignore','ignore'], '\Crefrange*'=>['ignore','ignore'],
+    '\cpageref'=>['ignore'], '\Cpageref'=>['ignore'],
+    '\cpagerefrange'=>['ignore','ignore'], '\Cpagerefrange'=>['ignore','ignore']
+};
 
 # Rules for package comment
 $PackageTeXenvir{'comment'}={
@@ -113,6 +137,10 @@ $PackageTeXmacro{'setspace'}={
 # Rules for package subfiles
 $PackageTeXfileinclude{'subfiles'}={
     '\subfile'=>'file'};
+    
+# Rules for package tabularx
+$PackageTeXenvir{'tabularx'}={'tabularx'=>'ignore'};
+$PackageTeXmacro{'tabularx'}={'begintabularx'=>['xx','xxx']};
 
 # Rules for package url
 # NB: \url|...| variant not implemented, only \url{...}
@@ -133,7 +161,7 @@ $PackageTeXmacro{'wrapfig'}={
 $PackageTeXmacro{'xcolor'}={
     '\textcolor'=>['ignore','text'],'\color'=>1,'\pagecolor'=>1,'\normalcolor'=>0,
     '\colorbox'=>['ignore','text'],'\fcolorbox'=>['ignore','ignore','text'],
-    '\definecolor'=>3,\'DefineNamedColor'=>4,
+    '\definecolor'=>3,'\DefineNamedColor'=>4,
     '\colorlet'=>2};
 
 # Rules for package xparse

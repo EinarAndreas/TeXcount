@@ -72,10 +72,11 @@ sub _parse_unit {
       push @specarg,$next;
     } elsif ($tex->{'type'}==$TOKEN_WORD) {
       # word
-      if (my $cnt=state_text_cnt($state)) {
-        _process_word($tex,$next,$state);
+      my $st=_wordtype_state($tex,$state,$next);
+      if (my $cnt=state_text_cnt($st)) {
+        _process_word($tex,$next,$st);
         inc_count($tex,$cnt);
-        set_style($tex,state_to_style($state));
+        set_style($tex,state_to_style($st));
       }
     } elsif ($state==$STATE_EXCLUDE_STRONGER) {
       # ignore remaining tokens
@@ -113,8 +114,27 @@ sub _parse_unit {
 # Print state
 sub _set_printstate {
   my ($tex,$state,$end)=@_;
-  $tex->{'printstate'}=':'.state_to_text($state).(defined $end?'>'.$end:'').':';
-  flush_next($tex);
+  my $ps=':'.state_to_text($state).(defined $end?'>'.$end:'').':';
+  print_style($ps,'state');
+  #$tex->{'printstate'}=$ps;
+  #flush_next($tex);
+}
+
+# State: get modified state if word of special word type
+sub _wordtype_state {
+  my ($tex,$st,$word)=@_;
+  if (defined $word) {
+    if (defined $wordtype2state{$st}) {
+      for my $rc (@{$wordtype2state{$st}}) {
+        my ($reg,$wtst)=@{$rc};
+        if ( $word =~ /$reg/) {
+          print_style(state_to_text($wtst).':','state');
+          return $wtst;
+        }
+      }
+    }
+  }
+  return $st;
 }
 
 # Process word with a given state (>0, i.e. counted)
@@ -203,8 +223,7 @@ sub _parse_tc {
   my ($tex,$next)=@_;
   set_style($tex,'tc');
   flush_next($tex);
-  assert($next=~s/^\%+TC:\s*(\w+)\s*//i
-    ,$tex,'TC command should have format %TC:instruction [[parameters]]')
+  assert($next=~s/^\%+TC:\s*(\w+)\s*//i,$tex,'TC command should have format %TC:instruction [[parameters]]')
   || return;
   my $instr=$1;
   $instr=~tr/[A-Z]/[a-z]/;
@@ -216,6 +235,11 @@ sub _parse_tc {
   } elsif ($instr eq 'endignore') {error($tex,'%TC:endignore without corresponding %TC:ignore.');
   } elsif ($instr eq 'newtemplate') {$outputtemplate='';
   } elsif ($instr eq 'template') {$outputtemplate.=$next;
+  } elsif ($instr eq 'usepackage') {
+    assert($next=~/[\w\s,]+/,'Expected list of packaches: %TC:usepackage {packages}');
+    foreach (split(/[\s,]+/,$next)) {
+      include_package($_,$tex);
+    }
   } elsif ($instr eq 'insert') {
     $tex->{'line'}="\n".$next.$tex->{'line'};
   } elsif ($instr eq 'subst') {
@@ -234,6 +258,14 @@ sub _parse_tc {
     my $like=$3;
     if ($next eq '') {$next=$key;}
     add_new_counter($key,$next,$like);
+  } elsif ($instr eq 'wordtype') {
+    assert($next=~s/^(\w+)\s+(\w+)\s+(\w+)\s*$//,$tex,'Expected format: %TC:wordtype {parse-state} {wordtype} {count-state}')
+    || return;
+    assert(my $st=$key2state{$1},$tex,"Invalid parse state: $1") || return;
+    assert(my $reg=$wordtype{$2},$tex,"Invalid word type: $2") || return;
+    assert(my $wtst=$key2state{$3},$tex,"Invalid count state: $3") || return;
+    if (!defined $wordtype2state{$st}) {$wordtype2state{$st}=[];}
+    push @{$wordtype2state{$st}},[$reg,$wtst];
   } elsif ($instr eq 'log') {
     assert($next=~s/^(.*)$//,$tex,'Expected format: %TC:log {text or template}') || return;
     note($tex,1,$1);
@@ -290,7 +322,7 @@ sub _parse_envir {
   my ($tex,$state)=@_;
   my $localstyle=state_is_text($state) ? 'envir' : 'exclenv';
   flush_next_gobble_space($tex,$localstyle,$state);
-  my ($envirname,$next);
+  my ($envirname,$next,$substat);
   if ($tex->{'line'} =~ s/^\{([^\{\}\s]+)\}[ \t\r\f]*//) {
     # gobble environment name
     $envirname=$1;
@@ -298,8 +330,12 @@ sub _parse_envir {
     print_style('{'.$1.'}',$localstyle);
     $next=$PREFIX_ENVIR.$envirname;
     __count_macrocount($tex,$next,$state);
-    if (defined (my $def=$TeXmacro{$next})) {
-      push @macro,__gobble_macro_parms($tex,$def,$__STATE_NULL);
+    if (($state==$STATE_FLOAT) && ($substat=$TeXfloatinc{$next})) {
+      $state = $__STATE_NULL;
+      $localstyle = 'envir';
+      push @macro,__gobble_macro_parms($tex,$substat,$__STATE_NULL);
+    } elsif (defined ($substat=$TeXmacro{$next})) {
+      push @macro,__gobble_macro_parms($tex,$substat,$__STATE_NULL);
     } else {
       push @macro,__gobble_options($tex);
     }
@@ -309,7 +345,7 @@ sub _parse_envir {
     error($tex,'Encountered \begin without environment name provided.');
   }
   # find new parsing state (or leave unchanged)
-  my $substat=$TeXenvir{$1};
+  $substat=$TeXenvir{$1};
   if (!defined $substat) {
     $substat=$state;
     if ($strictness>=1) {
@@ -557,7 +593,16 @@ sub __gobble_tc_ignore {
 sub __new_state {
   my ($substat,$oldstat)=@_;
   if (!defined $oldstat) {return $substat;}
-  foreach my $st (@STATE_FIRST_PRIORITY,@STATE_MID_PRIORITY,@STATE_LAST_PRIORITY) {
+  foreach my $st (@STATE_FIRST_PRIORITY) {
+    if ($oldstat==$st || $substat==$st) {return $st;}
+  }
+  foreach my $st (@STATE_MID_PRIORITY) {
+    if ($substat==$st) {return $st;}
+  }
+  foreach my $st (@STATE_MID_PRIORITY) {
+    if ($oldstat==$st) {return $st;}
+  }
+  foreach my $st (@STATE_LAST_PRIORITY) {
     if ($oldstat==$st || $substat==$st) {return $st;}
   }
   error($Main,'Could not determine new state in __new_state!','BUG');

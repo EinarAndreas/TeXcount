@@ -37,7 +37,7 @@ sub __count_and_header {
 # Return count title or '' if missing
 sub __count_header {
   my $count=shift @_;
-  return $count->{'title'}||'';
+  return $count->{'title'}||'Word count';
 }
 
 # Print total count (sum) for a given count object
@@ -130,8 +130,26 @@ sub count_in_template {
   $template=__process_template($template,'SUM',get_sum_count($count));
   $template=__process_template($template,'TITLE',$count->{'title'}||'');
   $template=__process_template($template,'SUB',number_of_subcounts($count));
+  $template=~s/\{([\w\d\+\-\*]+)\}/__template_expression($1,$count)/ge;
   $template=~s/\a//gis;
   return $template;
+}
+
+# Process template expressions: {counter+2*counter-counter...}
+sub __template_expression {
+  my ($exp,$count)=@_;
+  my $sum=0;
+  while ( $exp=~s/^([\+\-]?)((\d+)\*)?(\w+)// ) {
+    if (defined (my $cnt=$key2cnt{$4})) {
+      my $num = get_count($count,$cnt);
+      if ( $1 eq '-' ) {$num=-$num;}
+      if (defined $2) {$num*=$3;}
+      $sum+=$num;
+    } else {
+      print_error("Unknown counter: $2");
+    }
+  }
+  return $sum;
 }
 
 # Print counts using template
@@ -154,8 +172,10 @@ sub __print_subcounts_using_template {
 sub __process_template {
   my ($template,$label,$value)=@_;
   if ($value) {
+    $template=~s/\{($label)\?([^\?\{\}]+?)\}/\{$label\}/gis;
     $template=~s/\{($label)\?(.*?)(\|(.*?))?\?(\1)\}/$2/gis;
   } else {
+    $template=~s/\{($label)\?([^\?\{\}]+?)\}/$2/gis;
     $template=~s/\{($label)\?(.*?)\|(.*?)\?(\1)\}/$3/gis;
     $template=~s/\{($label)\?(.*?)\?(\1)\}//gis;
   }

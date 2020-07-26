@@ -6,11 +6,11 @@ use CGI ':standard';
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser set_message); 
 set_message('Please send information about this error to einarro@ifi.uio.no together with the text or file that caused it.');
 
-
 ##### Version information
+my $versionnumber="3.2.beta.16";
+my $versiondate="2020 Jul 25";
 
-my $versionnumber="3.1.1";
-my $versiondate="2018 Oct 28";
+
 
 ###### Set global constants and names
 
@@ -19,8 +19,8 @@ my %GLOBALDATA=
    ('versionnumber'  => $versionnumber
    ,'versiondate'    => $versiondate
    ,'maintainer'     => 'Einar Andreas Rodland'
-   ,'copyrightyears' => '2008-2018'
-   ,'website'        => 'http://app.uio.no/ifi/texcount/'
+   ,'copyrightyears' => '2008-2020'
+   ,'website'        => 'https://app.uio.no/ifi/texcount/'
    );
 
 ### Named constants
@@ -63,7 +63,7 @@ my $defaultVerbosity='0'; # Specification of default verbose output style
 my $defaultprintlevel=0; # Flag indicating default level of verbose output
 my $printlevel=undef; # Flag indicating level of verbose output
 my $showstates=0; # Flag to show internal state in verbose log
-my $showcodes=1; # Flag to show overview of colour codes (2=force)
+my $showcodes=-1; # Flag to show overview of colour codes (-1=bottom,0=none,1=top,2=force)
 my $showsubcounts=0; # Write subcounts if #>this, or not (if 0)
 my $separatorstyleregex='^word'; # Styles (regex) after which separator should be added
 my $separator=''; # Separator to add after words/tokens
@@ -273,6 +273,15 @@ my %state2cnt=(
     $STATE_TEXT_HEADER => $CNT_WORDS_HEADER,
     $STATE_TEXT_FLOAT  => $CNT_WORDS_OTHER);
 
+# Word type may be used to modify counting state
+my %wordtype=(
+  'number' => qr/^\-?[\d\,\.]+$/,
+  'mixed'  => qr/(\d[^\d]|[^\d]\d)/,
+  'nonum'  => qr/^[^\d]*$/);
+
+# For each state, map wordtype to changed state
+my %wordtype2state=();
+
 # Transition state mapped to content state and counter
 my %transition2state=(
     $STATE_TO_HEADER      => [$STATE_TEXT_HEADER,$CNT_COUNT_HEADER],
@@ -402,7 +411,7 @@ my $STYLE_EMPTY=' ';
 my $STYLE_BLOCK='-';
 my $NOSTYLE=' ';
 $STYLES{'Errors'}={'error'=>'bold red','note'=>'bold white'};
-$STYLES{'Words'}={'word'=>'blue','hword'=>'bold blue','oword'=>'blue','altwd'=>'blue'};
+$STYLES{'Words'}={'word'=>'blue','hword'=>'bold blue','oword'=>'blue','altwd'=>'magenta'};
 $STYLES{'Macros'}={'cmd'=>'green','fileinc'=>'bold green','special'=>'bold red','specarg'=>'red'};
 $STYLES{'Options'}={'option'=>'yellow','optparm'=>'green'};
 $STYLES{'Ignored'}={'ignore'=>'cyan','math'=>'magenta'};
@@ -465,7 +474,7 @@ my $specialchars='\\\\('.join('|',@LetterMacros).')(\{\}|\s+|\b)';
 my $modifiedchars='\\\\[\'\"\`\~\^\=](@|\{@\})';
 my %NamedLetterPattern;
 $NamedLetterPattern{'restricted'}='@';
-$NamedLetterPattern{'default'}='('.join('|','@',$modifiedchars,$specialchars).')';
+$NamedLetterPattern{'default'}='('.join('|','@',$modifiedchars,$specialchars,'[\.\,]\d').')';
 $NamedLetterPattern{'relaxed'}=$NamedLetterPattern{'default'};
 my $LetterPattern=$NamedLetterPattern{'default'};
 
@@ -477,7 +486,7 @@ my $LetterPattern=$NamedLetterPattern{'default'};
 # alphabet/logogram settings.
 my %NamedWordPattern;
 $NamedWordPattern{'letters'}='@';
-$NamedWordPattern{'words'}='(@+|@+\{@+\}|\{@+\}@+)([\-\'\.]?(@+|\{@+\}))*';
+$NamedWordPattern{'words'}='(@+|@+\{@+\}|\{@+\}@+)([\-\'\.\x{200C}]?(@+|\{@+\}))*';
 my @WordPatterns=($NamedWordPattern{'words'});
 my $WordPattern; # Regex matching a word (defined in apply_language_options())
 
@@ -674,16 +683,16 @@ add_keys_to_hash(\%TeXenvir,'text',
 add_keys_to_hash(\%TeXenvir,'inlinemath',
     'math');
 add_keys_to_hash(\%TeXenvir,'displaymath',
-    'displaymath','equation','equation*','eqnarray','eqnarray*','align','align*',);
+    'displaymath','equation','equation*','eqnarray','eqnarray*','align','align*','array');
 add_keys_to_hash(\%TeXenvir,'float',
     'float','picture','figure','figure*','table','table*');
 add_keys_to_hash(\%TeXenvir,'xall',
-    'verbatim','tikzpicture');
+    'verbatim','tikzpicture','comment');
 
 # Environment parameters
 my $PREFIX_ENVIR='begin'; # Prefix used for environment names
 add_keys_to_hash(\%TeXmacro,1,
-    'beginthebibliography','beginlrbox','beginminipage');
+    'beginthebibliography','beginlrbox','beginminipage','beginarray');
 add_keys_to_hash(\%TeXmacro,2,
     'beginlist');
 add_keys_to_hash(\%TeXmacro,['ignore'],
@@ -721,6 +730,10 @@ convert_hash(\%TeXenvir,\&key_to_state);
 
 ### Package rule definitions
 
+# Packages included by default
+my @DefaultPackages=('amsmath');
+
+# Hashes storing package specific rules
 my %PackageTeXpreamble=(); # TeXpreamble definitions per package
 my %PackageTeXpackageinc=(); # TeXpackageinc definitions per package
 my %PackageTeXfloatinc=(); # TeXfloatinc definitions per package
@@ -741,6 +754,16 @@ $PackageTeXfileinclude{'%incbib'}={'\bibliography'=>'<bbl>'};
 $PackageTeXenvir{'alltt'}={
     'alltt'=>'xall'};
 
+# Rules for package amsmath
+$PackageTeXenvir{'amsmath'}={
+    'multline'=>'displaymath','multline*'=>'displaymath',
+    'gather'=>'displaymath','gather*'=>'displaymath',
+    'align'=>'displaymath','align*'=>'displaymath',
+    'flalign'=>'displaymath','flalign*'=>'displaymath',
+    'alignat'=>'displaymath','alignat*'=>'displaymath'};
+$PackageTeXmacro{'amsmath'}={
+    'beginalignat'=>1, 'beginalignat*'=>1};
+
 # Rules for package babel
 # NB: Only core macros implemented, those expected found in regular documents
 $PackageTeXenvir{'babel'}={
@@ -748,6 +771,16 @@ $PackageTeXenvir{'babel'}={
 $PackageTeXmacro{'babel'}={
     '\selectlanguage'=>1,'\foreignlanguage'=>['ignore','text'],
     'beginotherlanguage'=>1,'beginotherlanguage*'=>1};
+
+# Rules for package cleveref
+$PackageTeXmacro{'cleveref'}={
+    '\cref'=>['ignore'], '\Cref'=>['ignore'],
+    '\cref*'=>['ignore'], '\Cref*'=>['ignore'],
+    '\crefrange'=>['ignore','ignore'], '\Crefrange'=>['ignore','ignore'],
+    '\crefrange*'=>['ignore','ignore'], '\Crefrange*'=>['ignore','ignore'],
+    '\cpageref'=>['ignore'], '\Cpageref'=>['ignore'],
+    '\cpagerefrange'=>['ignore','ignore'], '\Cpagerefrange'=>['ignore','ignore']
+};
 
 # Rules for package comment
 $PackageTeXenvir{'comment'}={
@@ -834,6 +867,10 @@ $PackageTeXmacro{'setspace'}={
 # Rules for package subfiles
 $PackageTeXfileinclude{'subfiles'}={
     '\subfile'=>'file'};
+    
+# Rules for package tabularx
+$PackageTeXenvir{'tabularx'}={'tabularx'=>'ignore'};
+$PackageTeXmacro{'tabularx'}={'begintabularx'=>['xx','xxx']};
 
 # Rules for package url
 # NB: \url|...| variant not implemented, only \url{...}
@@ -854,14 +891,14 @@ $PackageTeXmacro{'wrapfig'}={
 $PackageTeXmacro{'xcolor'}={
     '\textcolor'=>['ignore','text'],'\color'=>1,'\pagecolor'=>1,'\normalcolor'=>0,
     '\colorbox'=>['ignore','text'],'\fcolorbox'=>['ignore','ignore','text'],
-    '\definecolor'=>3,\'DefineNamedColor'=>4,
+    '\definecolor'=>3,'\DefineNamedColor'=>4,
     '\colorlet'=>2};
 
 # Rules for package xparse
 $PackageSubpackage{'xparse'}=['etoolbox'];
 
 
-###### Main script
+###### Main CGI script
 
 
 ###################################################
@@ -881,7 +918,7 @@ sub MAIN {
   print "Content-Type: text/html\n\n";
   Set_Options();
   Apply_Options();
-  conditional_print_style_list();
+  if ($showcodes>0) {print_style_list();}
   my $tex;
   if (my $bincode=param('latexcode')) {
     $tex=TeXcode($bincode);
@@ -898,6 +935,7 @@ sub MAIN {
   my $filecount=next_subcount($tex);
   print_count($filecount);
   Report_Errors();
+  if ($showcodes<0) {print_style_list();}
   if ($optionWordFreq || $optionWordClassFreq) {print_word_freq();}
   Close_Output();
   if ( (defined $LOGfilename) && open(my $LOG,">>$LOGfilename") ) {
@@ -996,7 +1034,7 @@ sub ansiprint {
 }
 
 
-###### Option processing
+###### Option handling
 
 
 # Apply options to set values
@@ -1005,6 +1043,7 @@ sub Apply_Options {
   if ($htmlstyle==$HTML_FULL) {html_head();}
   flush_errorbuffer($Main);
   apply_language_options();
+  apply_include_default_packages();
   if ($includeBibliography) {apply_include_bibliography();}
   if ($showcodes>1 && !($STYLE{'<printlevel>'})) {%STYLE=%{$STYLES{'All'}};} 
   if ($showstates) {set_verbosity_options('+States');}
@@ -1163,6 +1202,14 @@ sub apply_language_options {
   $WordPattern=join '|',@WordPatterns;
 }
 
+# Apply default package inclusion
+sub apply_include_default_packages {
+  foreach (@DefaultPackages) {
+    print STDERR "Default include: $_\n";
+    include_package($_);
+  }
+}
+
 # Apply incbib rule
 sub apply_include_bibliography {
   include_package('%incbib');
@@ -1212,7 +1259,7 @@ sub tc_macro_param_option {
     # No parameter checking here, just pass on; errors reported when used instead.
     $param=~s/^\[(.*)\]$/$1/;
     $param=~s/,/ /g;
-    assert($param=~/^\w+(\s\w+)*$/,$tex,'Invalid %TC:fileinclude parameter: '.$param)
+    assert($param=~/^\w+(\s\w+)*$/||0,$tex,'Invalid %TC:fileinclude parameter: '.$param)
     || return 0;
     $TeXfileinclude{$macro}=$param;
   }
@@ -1456,7 +1503,7 @@ sub _TeXcode_blank {
   my ($file,$title)=@_;
   if (defined $title) {}
   elsif (defined $file) {$title='File: '.$file;}
-  else {$title='Word count';}
+  #else {$title='Word count';}  # Leave undefined
   my %TeX=();
   $TeX{'errorcount'}=0;
   $TeX{'warnings'}={};
@@ -1785,10 +1832,11 @@ sub _parse_unit {
       push @specarg,$next;
     } elsif ($tex->{'type'}==$TOKEN_WORD) {
       # word
-      if (my $cnt=state_text_cnt($state)) {
-        _process_word($tex,$next,$state);
+      my $st=_wordtype_state($tex,$state,$next);
+      if (my $cnt=state_text_cnt($st)) {
+        _process_word($tex,$next,$st);
         inc_count($tex,$cnt);
-        set_style($tex,state_to_style($state));
+        set_style($tex,state_to_style($st));
       }
     } elsif ($state==$STATE_EXCLUDE_STRONGER) {
       # ignore remaining tokens
@@ -1826,8 +1874,27 @@ sub _parse_unit {
 # Print state
 sub _set_printstate {
   my ($tex,$state,$end)=@_;
-  $tex->{'printstate'}=':'.state_to_text($state).(defined $end?'>'.$end:'').':';
-  flush_next($tex);
+  my $ps=':'.state_to_text($state).(defined $end?'>'.$end:'').':';
+  print_style($ps,'state');
+  #$tex->{'printstate'}=$ps;
+  #flush_next($tex);
+}
+
+# State: get modified state if word of special word type
+sub _wordtype_state {
+  my ($tex,$st,$word)=@_;
+  if (defined $word) {
+    if (defined $wordtype2state{$st}) {
+      for my $rc (@{$wordtype2state{$st}}) {
+        my ($reg,$wtst)=@{$rc};
+        if ( $word =~ /$reg/) {
+          print_style(state_to_text($wtst).':','state');
+          return $wtst;
+        }
+      }
+    }
+  }
+  return $st;
 }
 
 # Process word with a given state (>0, i.e. counted)
@@ -1916,8 +1983,7 @@ sub _parse_tc {
   my ($tex,$next)=@_;
   set_style($tex,'tc');
   flush_next($tex);
-  assert($next=~s/^\%+TC:\s*(\w+)\s*//i
-    ,$tex,'TC command should have format %TC:instruction [[parameters]]')
+  assert($next=~s/^\%+TC:\s*(\w+)\s*//i,$tex,'TC command should have format %TC:instruction [[parameters]]')
   || return;
   my $instr=$1;
   $instr=~tr/[A-Z]/[a-z]/;
@@ -1929,6 +1995,11 @@ sub _parse_tc {
   } elsif ($instr eq 'endignore') {error($tex,'%TC:endignore without corresponding %TC:ignore.');
   } elsif ($instr eq 'newtemplate') {$outputtemplate='';
   } elsif ($instr eq 'template') {$outputtemplate.=$next;
+  } elsif ($instr eq 'usepackage') {
+    assert($next=~/[\w\s,]+/,'Expected list of packaches: %TC:usepackage {packages}');
+    foreach (split(/[\s,]+/,$next)) {
+      include_package($_,$tex);
+    }
   } elsif ($instr eq 'insert') {
     $tex->{'line'}="\n".$next.$tex->{'line'};
   } elsif ($instr eq 'subst') {
@@ -1947,6 +2018,14 @@ sub _parse_tc {
     my $like=$3;
     if ($next eq '') {$next=$key;}
     add_new_counter($key,$next,$like);
+  } elsif ($instr eq 'wordtype') {
+    assert($next=~s/^(\w+)\s+(\w+)\s+(\w+)\s*$//,$tex,'Expected format: %TC:wordtype {parse-state} {wordtype} {count-state}')
+    || return;
+    assert(my $st=$key2state{$1},$tex,"Invalid parse state: $1") || return;
+    assert(my $reg=$wordtype{$2},$tex,"Invalid word type: $2") || return;
+    assert(my $wtst=$key2state{$3},$tex,"Invalid count state: $3") || return;
+    if (!defined $wordtype2state{$st}) {$wordtype2state{$st}=[];}
+    push @{$wordtype2state{$st}},[$reg,$wtst];
   } elsif ($instr eq 'log') {
     assert($next=~s/^(.*)$//,$tex,'Expected format: %TC:log {text or template}') || return;
     note($tex,1,$1);
@@ -2003,7 +2082,7 @@ sub _parse_envir {
   my ($tex,$state)=@_;
   my $localstyle=state_is_text($state) ? 'envir' : 'exclenv';
   flush_next_gobble_space($tex,$localstyle,$state);
-  my ($envirname,$next);
+  my ($envirname,$next,$substat);
   if ($tex->{'line'} =~ s/^\{([^\{\}\s]+)\}[ \t\r\f]*//) {
     # gobble environment name
     $envirname=$1;
@@ -2011,8 +2090,12 @@ sub _parse_envir {
     print_style('{'.$1.'}',$localstyle);
     $next=$PREFIX_ENVIR.$envirname;
     __count_macrocount($tex,$next,$state);
-    if (defined (my $def=$TeXmacro{$next})) {
-      push @macro,__gobble_macro_parms($tex,$def,$__STATE_NULL);
+    if (($state==$STATE_FLOAT) && ($substat=$TeXfloatinc{$next})) {
+      $state = $__STATE_NULL;
+      $localstyle = 'envir';
+      push @macro,__gobble_macro_parms($tex,$substat,$__STATE_NULL);
+    } elsif (defined ($substat=$TeXmacro{$next})) {
+      push @macro,__gobble_macro_parms($tex,$substat,$__STATE_NULL);
     } else {
       push @macro,__gobble_options($tex);
     }
@@ -2022,7 +2105,7 @@ sub _parse_envir {
     error($tex,'Encountered \begin without environment name provided.');
   }
   # find new parsing state (or leave unchanged)
-  my $substat=$TeXenvir{$1};
+  $substat=$TeXenvir{$1};
   if (!defined $substat) {
     $substat=$state;
     if ($strictness>=1) {
@@ -2270,7 +2353,16 @@ sub __gobble_tc_ignore {
 sub __new_state {
   my ($substat,$oldstat)=@_;
   if (!defined $oldstat) {return $substat;}
-  foreach my $st (@STATE_FIRST_PRIORITY,@STATE_MID_PRIORITY,@STATE_LAST_PRIORITY) {
+  foreach my $st (@STATE_FIRST_PRIORITY) {
+    if ($oldstat==$st || $substat==$st) {return $st;}
+  }
+  foreach my $st (@STATE_MID_PRIORITY) {
+    if ($substat==$st) {return $st;}
+  }
+  foreach my $st (@STATE_MID_PRIORITY) {
+    if ($oldstat==$st) {return $st;}
+  }
+  foreach my $st (@STATE_LAST_PRIORITY) {
     if ($oldstat==$st || $substat==$st) {return $st;}
   }
   error($Main,'Could not determine new state in __new_state!','BUG');
@@ -2342,11 +2434,11 @@ sub _get_next_token {
     } elsif ($ch=~/^['"`:.,()[]!+-*=\/^_@<>~#&]$/) {
       return __get_chtoken($tex,$ch,$TOKEN_SYMBOL);
     } elsif ($ch eq '%') {
-      if ($tex->{'line'}=~s/^(\%+TC:\s*endignore\b[^\r\n]*)//i) {
+      if ($tex->{'line'}=~s/^(\%+TC:\s*endignore\b[^\r\n\%]*)//i) {
         __set_token($tex,$1,$TOKEN_TC);
         return "%TC:endignore";
       }
-      if ($tex->{'line'}=~s/^(\%+[tT][cC]:[^\r\n]*)//) {return __set_token($tex,$1,$TOKEN_TC);}
+      if ($tex->{'line'}=~s/^(\%+[tT][cC]:([^\r\n\%]|[^\s]\%)*)//) {return __set_token($tex,$1,$TOKEN_TC);}
       if ($tex->{'line'}=~s/^(\%+[^\r\n]*)//) {return __set_token($tex,$1,$TOKEN_COMMENT);}
       return __get_chtoken($tex,$ch,$TOKEN_COMMENT);
     } else {
@@ -2734,7 +2826,7 @@ sub __count_and_header {
 # Return count title or '' if missing
 sub __count_header {
   my $count=shift @_;
-  return $count->{'title'}||'';
+  return $count->{'title'}||'Word count';
 }
 
 # Print total count (sum) for a given count object
@@ -2827,8 +2919,26 @@ sub count_in_template {
   $template=__process_template($template,'SUM',get_sum_count($count));
   $template=__process_template($template,'TITLE',$count->{'title'}||'');
   $template=__process_template($template,'SUB',number_of_subcounts($count));
+  $template=~s/\{([\w\d\+\-\*]+)\}/__template_expression($1,$count)/ge;
   $template=~s/\a//gis;
   return $template;
+}
+
+# Process template expressions: {counter+2*counter-counter...}
+sub __template_expression {
+  my ($exp,$count)=@_;
+  my $sum=0;
+  while ( $exp=~s/^([\+\-]?)((\d+)\*)?(\w+)// ) {
+    if (defined (my $cnt=$key2cnt{$4})) {
+      my $num = get_count($count,$cnt);
+      if ( $1 eq '-' ) {$num=-$num;}
+      if (defined $2) {$num*=$3;}
+      $sum+=$num;
+    } else {
+      print_error("Unknown counter: $2");
+    }
+  }
+  return $sum;
 }
 
 # Print counts using template
@@ -2851,8 +2961,10 @@ sub __print_subcounts_using_template {
 sub __process_template {
   my ($template,$label,$value)=@_;
   if ($value) {
+    $template=~s/\{($label)\?([^\?\{\}]+?)\}/\{$label\}/gis;
     $template=~s/\{($label)\?(.*?)(\|(.*?))?\?(\1)\}/$2/gis;
   } else {
+    $template=~s/\{($label)\?([^\?\{\}]+?)\}/$2/gis;
     $template=~s/\{($label)\?(.*?)\|(.*?)\?(\1)\}/$3/gis;
     $template=~s/\{($label)\?(.*?)\?(\1)\}//gis;
   }
@@ -2950,14 +3062,8 @@ sub line_return {
 ###### Print help on style/colour codes
 
 
-# Print output style codes if conditions are met
-sub conditional_print_style_list {
-  if ($showcodes) {_print_style_list();}
-  return $showcodes;
-}
-
 # Print help on output styles
-sub _print_style_list {
+sub print_style_list {
   if ($printlevel<=0) {return;}
   if ($htmlstyle) {print '<div class="stylehelp"><p>';}
   formatprint('Format/colour codes of verbose output:','h2');
@@ -3067,7 +3173,7 @@ body {width:auto;padding:5;margin:5;}
 .word {color: #009}
 .hword {color: #009; font-weight: 700;}
 .oword {color: #009; font-style: italic;}
-.altwd {color: #00c; font-style: oblique;}
+.altwd {color: #c0c; font-style: oblique;}
 .cmd {color: #c00;}
 .exclcmd {color: #f99;}
 .option {color: #cc0;}

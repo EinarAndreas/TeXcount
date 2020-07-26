@@ -6,6 +6,7 @@ use warnings;
 my $path="Perl/";
 my $logfile="Perl/_build_.log";
 my $versionfile="Perl/version.dat";
+my $datverfile="Perl/_version_.dat";
 my $execverfile="Perl/_version_.bat";
 
 # Parameters
@@ -17,6 +18,9 @@ my ($sec,$min,$hour,$day,$month,$year) = localtime();
 $year+=1900;
 my $date=sprintf("%4u",$year)." ".$months[$month]." ".sprintf("%02u",$day);
 my $datetime=$date.", ".sprintf("%02u",$hour).":".sprintf("%02u",$min).":".sprintf("%02u",$sec);
+
+# Replace #[[KEY]]# with value
+my %global_replace = ('YEAR'=>$year);
 
 ##########
 
@@ -36,60 +40,43 @@ close(LOG);
 ########## Main routines
 
 sub Build_Main {
-  SetOutFile(@_);
-  AppendFile("0_cmd_head.perl");
-  AppendVersion();
-  AppendFile("1__constants.perl","Set global constants and names");
-  AppendFile("1__setup.perl","Set global settings and variables");
-  AppendFile("1_cmd_setup.perl","Set CMD specific settings and variables");
-  AppendFile("1_states.perl","Set state identifiers and methods");
-  AppendFile("1_definitions.perl","Set global definitions");
-  AppendFile("1_def_word.perl","Define what a word is and language options");
-  AppendFile("1_def_alphabet.perl","Define character classes (alphabets)");
-  AppendFile("1_def_rules.perl","Define core rules");
-  AppendFile("1_def_packages.perl","Define package specific rules");
-  AppendFile("2_cmd_main.perl","Main script");
-  BigComment("Subroutines");
-  AppendFile("sub_cmd.perl","CMD specific implementations");
-  AppendFile("sub_options.perl","Option handling");
-  AppendFile("sub_rules.perl","Macro rules handling");
-  AppendFile("sub_texcode.perl","TeX code handle");
-  AppendFile("sub_cmd_filehandle.perl","TeX file reader");
-  AppendFile("sub_errors.perl","Error handling");
-  AppendFile("sub_parse.perl","Parsing routines");
-  AppendFile("sub_tokenise.perl","Tokenisation routines");
-  AppendFile("sub_count.perl","Count handling routines");
-  AppendFile("sub_output.perl","Result output routines");
-  AppendFile("sub_print.perl","Printing routines");
-  AppendFile("sub_print_count.perl","Routines for printing count summary");
-  AppendFile("sub_print_log.perl","Routines for printing parsing details");
-  AppendFile("sub_print_help.perl","Print help on style/colour codes");
-  AppendFile("sub_cmd_help.perl","Help routines");
-  AppendFile("sub_html.perl","HTML routines");
-  AppendFile("text_data.perl","Read text data");
-  AppendFile("text_help.txt"); # Help text
-  CloseOutFile();
+  my $file = shift @_;
+  Build($file, 'cmd');
 }
 
 sub Build_CGI {
-  SetOutFile(@_);
-  AppendFile("0_cgi_head.perl");
-  AppendVersion();
+  my $file = shift @_;
+  Build($file, 'cgi');
+}
+
+sub Build {
+  my ($file,$opt) = @_;
+  my $OPT = uc $opt;
+  SetOutFile($file);
+  if ($opt eq 'cmd') {
+  } elsif ($opt eq 'cgi') {
+  } else {
+    die "No build option: $opt\n";
+  }
+  AppendFile("0_${opt}_head.perl");
   AppendFile("1__constants.perl","Set global constants and names");
   AppendFile("1__setup.perl","Set global settings and variables");
-  AppendFile("1_cgi_setup.perl","Set CGI specific settings and variables");
+  AppendFile("1_${opt}_setup.perl","Set ${OPT} specific settings and variables");
   AppendFile("1_states.perl","Set state identifiers and methods");
   AppendFile("1_definitions.perl","Set global definitions");
   AppendFile("1_def_word.perl","Define what a word is and language options");
   AppendFile("1_def_alphabet.perl","Define character classes (alphabets)");
   AppendFile("1_def_rules.perl","Define core rules");
   AppendFile("1_def_packages.perl","Define package specific rules");
-  AppendFile("2_cgi_main.perl","Main script");
+  AppendFile("2_${opt}_main.perl","Main ${OPT} script");
   BigComment("Subroutines");
-  AppendFile("sub_cgi.perl","CGI specific implementations");
-  AppendFile("sub_options.perl","Option processing");
+  AppendFile("sub_${opt}.perl","${OPT} specific implementations");
+  AppendFile("sub_options.perl","Option handling");
   AppendFile("sub_rules.perl","Macro rules handling");
   AppendFile("sub_texcode.perl","TeX code handle");
+  if ($opt eq 'cmd') {
+    AppendFile("sub_cmd_filehandle.perl","TeX file reader");
+  }
   AppendFile("sub_errors.perl","Error handling");
   AppendFile("sub_parse.perl","Parsing routines");
   AppendFile("sub_tokenise.perl","Tokenisation routines");
@@ -99,9 +86,17 @@ sub Build_CGI {
   AppendFile("sub_print_count.perl","Routines for printing count summary");
   AppendFile("sub_print_log.perl","Routines for printing parsing details");
   AppendFile("sub_print_help.perl","Print help on style/colour codes");
+  if ($opt eq 'cmd') {
+    AppendFile("sub_cmd_help.perl","Help routines");
+  }
   AppendFile("sub_html.perl","HTML routines");
+  if ($opt eq 'cmd') {
+    AppendFile("text_data.perl","Read text data");
+    AppendFile("text_help.txt"); # Help text
+  }
   CloseOutFile();
 }
+
 
 ########## Subroutines
 
@@ -118,7 +113,6 @@ sub CloseOutFile {
 sub AppendVersion {
   AppendStrings(
   '##### Version information',
-  '',
   'my $versionnumber="'.$versionnumber.'";',
   'my $versiondate="'.$date.'";');
 }
@@ -134,8 +128,12 @@ sub AppendFile {
     $line=~s/\r\n/\n/;
     if ($line=~/^\s*#+:+/) {}
     elsif ($line=~/^\s*#+DEBUG(.*):/) {}
+    elsif ($line=~/^\s*#{3,}\[\[VERSIONINFO\]\]$/) {AppendVersion();}
     elsif ($line=~/^\s*#{3,}\[\[INCLUDE:(.*)\]\]$/) {print FH IncludeFile($1);}
-    else {print FH $line;}
+    else {
+      $line=~s/#\[\[(\w+)\]\]#/replace_value($1)/ge;
+      print FH $line;
+    }
   }
   print FH "\n\n";
   close(INFILE);
@@ -198,8 +196,16 @@ sub getVersion {
   $version=~s/-2/alpha/g;
   $ver=$version;
   $ver=~s/\./_/g;
-  open (EXECV,">".$execverfile) || die "Cannot write to execute version file.";
-  print EXECV "set version=".$ver."\n";
-  close (EXECV);
+  open (FH,">".$execverfile) || die "Cannot write to execute version file.";
+  print FH "set version=".$ver."\n";
+  close (FH);
+  open (FH,">".$datverfile) || die "Cannot write to version file.";
+  print FH $ver;
+  close (FH);
   return $version;
+}
+
+sub replace_value {
+  my $key = shift @_;
+  return $global_replace{$key};
 }

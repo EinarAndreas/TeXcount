@@ -6,6 +6,8 @@ use Encode;
 use Text::Wrap;
 use Term::ANSIColor;
 
+###[[VERSIONINFO]]
+
 # System variables
 my $terminalwidth;
 

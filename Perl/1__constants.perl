@@ -3,8 +3,8 @@ my %GLOBALDATA=
    ('versionnumber'  => $versionnumber
    ,'versiondate'    => $versiondate
    ,'maintainer'     => 'Einar Andreas Rodland'
-   ,'copyrightyears' => '2008-2018'
-   ,'website'        => 'http://app.uio.no/ifi/texcount/'
+   ,'copyrightyears' => '2008-#[[YEAR]]#'
+   ,'website'        => 'https://app.uio.no/ifi/texcount/'
    );
 
 ### Named constants

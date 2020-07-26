@@ -38,7 +38,7 @@
 
 \option[-0]Same as \code{-1}, i.e. \code{-brief} and \code{-total}, but does not put a line shift at the end. This may be useful when the one line output is to be used by another application, e.g. Emacs, for which the line shift would otherwise need to be stripped away.
 
-\option[-template="\ldots"]Specify an output template which is used to generate the summary output for each file and for the total count. Codes \code{\{\textit{label}\}} is used to include values, where \code{\textit{label}} is one of \code{0} to \code{7} (for the counts), \code{SUM}, \code{ERROR} or \code{TITLE} (first character of label is sufficient). Conditional inclusion is done using \code{\{\textit{label}?\textit{text}?\textit{label}\}} or \code{\{\textit{label}?\textit{if non-zero}|\textit{if zero}?\textit{label}\}}. If the count contains at least two subcounts, use \code{\{SUB?\textit{template}?SUB\}} with a separate template for the subcounts, or \code{\{SUB?\textit{prefix}|\textit{template}|\textit{suffix}?SUB\}}.
+\option[-template="\ldots"]Specify an output template which is used to generate the summary output for each file and for the total count. Codes \code{\{\textit{label}\}} is used to include values, where \code{\textit{label}} is the counter keywords (\code{word}, \code{headerword}, etc or counter number \code{0} to \code{7}), an arithmetic expression combining multiple counter keywords, \code{SUM}, \code{ERROR} or \code{TITLE}. Conditional inclusion is done using \code{\{\textit{label}?\textit{text}?\textit{label}\}} or \code{\{\textit{label}?\textit{if non-zero}|\textit{if zero}?\textit{label}\}}. If the count contains at least two subcounts, use \code{\{SUB?\textit{template}?SUB\}} with a separate template for the subcounts, or \code{\{SUB?\textit{prefix}|\textit{template}|\textit{suffix}?SUB\}}.
 
 \option[-sub\alt{=\ldots}, -subcount\alt{=\ldots}]Generate subcounts. Valid option values are \code{none}, \code{part}, \code{chapter}, \code{section} and \code{subsection} (default), indicating at which level subcounts are generated. (On by default.)
 
@@ -130,6 +130,8 @@
 
 \option[-nocodes]Do not display overview of colour codes.
 
+\option[-topcodes, -bottomcodes]Determines if overview of colour codes should be placed at the top or at the bottom (default).
+
 \option[-opt=, -optionfile=]Reads options (command line parameters) from a specified text file. Should use one option per line. May also include TC options in the same format as specified in \LaTeX{} documents, but prefixed by \code{\%} rather than \code{\%TC:}. Blank lines and lines starting with \code{\#} are ignored; lines starting with \code{\bs{}} are considered to be continuations of the previous line.
 
 \option[-split, -nosplit]The \code{-split} option, which is on by default, speeds up handling of large files by splitting the file into paragraphs. To turn it off, use the \code{-nosplit} option.
@@ -147,6 +149,8 @@
 \option[-help-style, -h-style]Lists all styles and style categories, i.e. those permitted used in -v={styles-list}.
 
 \option[-help-style=, -h-style=]Gives description of style or style category. 
+
+\option[-help-all-rules]List all rules (except some hardcoded ones), including package specific rules.
 
 \option[-ver, --version]Print version number.
 

@@ -67,11 +67,11 @@ sub _get_next_token {
     } elsif ($ch=~/^['"`:.,()[]!+-*=\/^_@<>~#&]$/) {
       return __get_chtoken($tex,$ch,$TOKEN_SYMBOL);
     } elsif ($ch eq '%') {
-      if ($tex->{'line'}=~s/^(\%+TC:\s*endignore\b[^\r\n]*)//i) {
+      if ($tex->{'line'}=~s/^(\%+TC:\s*endignore\b[^\r\n\%]*)//i) {
         __set_token($tex,$1,$TOKEN_TC);
         return "%TC:endignore";
       }
-      if ($tex->{'line'}=~s/^(\%+[tT][cC]:[^\r\n]*)//) {return __set_token($tex,$1,$TOKEN_TC);}
+      if ($tex->{'line'}=~s/^(\%+[tT][cC]:([^\r\n\%]|[^\s]\%)*)//) {return __set_token($tex,$1,$TOKEN_TC);}
       if ($tex->{'line'}=~s/^(\%+[^\r\n]*)//) {return __set_token($tex,$1,$TOKEN_COMMENT);}
       return __get_chtoken($tex,$ch,$TOKEN_COMMENT);
     } else {

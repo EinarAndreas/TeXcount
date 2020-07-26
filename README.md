@@ -10,7 +10,7 @@ been counted.
 # Web site and online web service
 
 Go to
-  http://app.uio.no/ifi/texcount/
+  https://app.uio.no/ifi/texcount/
 for more information or to access the script online as a web service.
 
 
@@ -25,7 +25,7 @@ There is documentation at different levels of detail and technicality:
 * **TechDoc** is the technical documentation of the internals of TeXcount.
 
 Additional documentation, including scripts and examples, are available on the TeXcount web site:
-  http://app.uio.no/ifi/texcount/
+  https://app.uio.no/ifi/texcount/
 
 Questions posted to StackExchange and tagged *texcount* will automatically notify the TeXcount developer:
   https://tex.stackexchange.com/questions/tagged/texcount

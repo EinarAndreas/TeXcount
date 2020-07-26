@@ -3,17 +3,11 @@
 #::
 #: Routines for external access:
 #:   >2_*_main
-#:     conditional_print_style_list()
+#:     print_style_list()
 #:
 
-# Print output style codes if conditions are met
-sub conditional_print_style_list {
-  if ($showcodes) {_print_style_list();}
-  return $showcodes;
-}
-
 # Print help on output styles
-sub _print_style_list {
+sub print_style_list {
   if ($printlevel<=0) {return;}
   if ($htmlstyle) {print '<div class="stylehelp"><p>';}
   formatprint('Format/colour codes of verbose output:','h2');

@@ -106,16 +106,16 @@ add_keys_to_hash(\%TeXenvir,'text',
 add_keys_to_hash(\%TeXenvir,'inlinemath',
     'math');
 add_keys_to_hash(\%TeXenvir,'displaymath',
-    'displaymath','equation','equation*','eqnarray','eqnarray*','align','align*',);
+    'displaymath','equation','equation*','eqnarray','eqnarray*','align','align*','array');
 add_keys_to_hash(\%TeXenvir,'float',
     'float','picture','figure','figure*','table','table*');
 add_keys_to_hash(\%TeXenvir,'xall',
-    'verbatim','tikzpicture');
+    'verbatim','tikzpicture','comment');
 
 # Environment parameters
 my $PREFIX_ENVIR='begin'; # Prefix used for environment names
 add_keys_to_hash(\%TeXmacro,1,
-    'beginthebibliography','beginlrbox','beginminipage');
+    'beginthebibliography','beginlrbox','beginminipage','beginarray');
 add_keys_to_hash(\%TeXmacro,2,
     'beginlist');
 add_keys_to_hash(\%TeXmacro,['ignore'],

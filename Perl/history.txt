@@ -1,15 +1,25 @@
 ################ TODO ################
 # +=important, -=medium, ?=maybe, H=help, D=documentation, W=web
 D Factor out version and year: use version file.
-+ Check copyright year in 1__constants (or auto-update).
+D Hierarchy of states and how transitions are made.
+D Use of %TC:wordtype to make separate counts.
+D Added %TC:usepackage to add package rules.
+D Template format {label?misstext}.
++ Options to control default package inclusion.
++ Check on math macros, eg things like \left[.
++ Have %TC:floatinclude use existing rules if none is specified.
++ Allow non breaking space within numbers.
++ Add TC-option for setting sum weight, eg for new counters.
++ %TC:fileinclude accepts any name as file type.
++ Bug: Does not respect -includepackage when using -help-rule.
 + Bug: Nested subfolder file inclusion using -inc vs -merge.
 + Options should not allow partial group/math delimiters etc.
-+ Add rule for \let. Problem with \letX=Y format.
++ Add rule for \let. Problem with \let\X=Y format.
 + Missing: TC-command newcounter etc not handled in options file.
 + Implement %TC conversion rules to handle \begin{envir}.
 + Implement: count characters including spaces.
 + In -sum= option, use counter names (not 1,1,1 format).
-- Default inclusion of packages.
+- Add method for adding custom wordtypes.
 - Add macro *-option gobbling rules for various macros.
 - Ability to subcount macro/environment content.
 - CGI-version length/content checking/verification to prevent non-TeX code.
@@ -25,6 +35,25 @@ D Factor out version and year: use version file.
 
 
 ############### HISTORY ###############
+- Template format {label?misstext}.
+- CGI: Leave title undefined when no filename is given.
+- Added %TC:usepackage to add package rules.
+>>> Version 3.2.beta (2020 July 21) <<<
+- Added @DefaultPackages for default inclusion of packages.
+- Added package rules: amsmath, tabularx.
+- Refactored build script to have one joint build function.
+- Added -help-all-rules to list all rules including package specific rules.
+- Fixed: %TC instruction parsing changed to ignore comments added at end.
+- Fixed: Allow beginenvir as %TC:floatinclude argument.
+- Added value inclusion to build script: auto-update copyright year in 1__constants.
+- Added expressions, {[[+-num*cnt]]}, to templates.
+- Moved style codes to bottom, and added options -topcodes, -bottomcodes.
+- Fixed: Numbers can be written with thousand separators.
+- Added wordtype and state+wordtype=>state specified by %TC:wordtype.
+- Fixed: Bug in tc_macro_param_option assert statement, regex not valid as test.
+- Added \x{200C} zero-width non-joiner to $NamedWordPattern{'words'}.
+- Added package rules for cleveref.
+- Updating web page refs, files, and documents to https.
 - Fixed: Escaped all braces in regexes.
 - Improved HTML layout a little with div.sumgroup around total sum; made CSS example.
 - Started naming constants: $HTML_*, $INCLUDE_*, ...

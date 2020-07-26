@@ -191,7 +191,7 @@ in which \code{alphabetic} is defined by \TeXcount{} as the Unicode \code{Alphab
 \codeline{-logograms=Ideographic,Hiragana,Katakana,Thai,Lao}
 which should cover Chinese characters (\code{Han}) as well as the Japanese characters (\code{Han} for the kanji, \code{Hiragana} and \code{Katakana} for the kana). Both options remove previous script settings, unless the list is prefixed by \code{+} in which case the scripts are added: e.g. \code{-logograms=+cjkpunctuation} will add the CJK punctuation characters (defined by \TeXcount) to the set of counted characters.
 
-Applicable Unicode properties/scripts include \code{Digit}, \code{Latin}, \code{Greek}, \code{Cyrillic}, \code{Hebrew}, \code{Arabic}, \code{Han}, \code{Katakana}, \code{Hiragana}, and more.\footnote{A more complete overview is available at Wikipedia: \url{http://en.wikipedia.org/wiki/Script_(Unicode)}.}
+Applicable Unicode properties/scripts include \code{Digit}, \code{Latin}, \code{Greek}, \code{Cyrillic}, \code{Hebrew}, \code{Arabic}, \code{Han}, \code{Katakana}, \code{Hiragana}, and more.\footnote{A more complete overview is available at Wikipedia: \url{https://en.wikipedia.org/wiki/Script_(Unicode)}.}
 
 In addition to the Unicode properties, \TeXcount{} has added a few additional character groups. The properties \code{alphabetic}, \code{digit} and \code{alphanumeric} are more restrictive than their Unicode name-sakes: \code{alphabetic} excludes the default logographic character sets, and \code{digit} consists only of 0--9 unlike Unicode \code{Digit} which includes numerals from other scripts. There is also \code{cjkpunctuation} which is intended to identify Chinese/Japanese/Korean punctuation.
 
@@ -382,9 +382,11 @@ In order to only write the total summary, use the option \code{-total}. If there
 
 You may specify an output template to use instead of the default output formats. This will replace the output per file or for the total with output produced using this template.
 
-The template is a string with codes for inserting the count values and titles. To specify it, use the option \code{-template="\textit{template}"}. The encapsulating \code{"\ldots"} are required if the template contains spaces. You may insert line shifts by using \code{\bs{n}}.
+The template is a string with codes for inserting the count values and titles. To specify it, you can use the option \code{-template="\textit{template}"}. The encapsulating \code{"\ldots"} are required if the template contains spaces. You may insert line shifts by using \code{\bs{n}}.
 
-The counts may be included by using the counter keywords: \code{word}, \code{headerword}, etc. Other codes that may be inserted are: \code{\{SUM\}} to insert the count as specified by the \code{-sum} option, \code{\{TITLE\}} for the title (e.g. section name) and a header (same as title unless \TeXcount{} has replaced it), \code{\{ERROR\}} for the number of parsing errors, \code{\{WARNINGS\}} for the number of distinct warnings, or \code{\{NWARNINGS\}} for the total number of warnings. Some of these also have shortened forms\footnote{Previously, one-letter versions of some of these codes were permitted, but that is no longer the case.} like \code{\{ERR\}} and \code{\{WARN\}}.
+Alternatively, you can specify tempates within the document itself using the \TeXcount{} instructions \code{\%TC:newtemplate} followed by one or more \code{\%TC:template \textit{template-text}} lines.
+
+The counts may be included by using the counter keywords---\code{word}, \code{headerword}, etc---or arithmetic combinations of these, eg \code{word+otherword+2*headerword}. Other codes that may be inserted are: \code{\{SUM\}} to insert the count as specified by the \code{-sum} option, \code{\{TITLE\}} for the title (e.g. section name) and a header (same as title unless \TeXcount{} has replaced it), \code{\{ERROR\}} for the number of parsing errors, \code{\{WARNINGS\}} for the number of distinct warnings, or \code{\{NWARNINGS\}} for the total number of warnings. Some of these also have shortened forms\footnote{Previously, one-letter versions of some of these codes were permitted, but that is no longer the case.} like \code{\{ERR\}} and \code{\{WARN\}}.
 
 Conditional inclusion may be performed using the format \code{\{\textit{label}?\ldots?\textit{label}\}} where \code{\textit{label}} is one of the counter keywords, \code{SUM}, \code{ERROR} or \code{TITLE} (or their alternative forms). The enclosed text will then be included only if the corresponding value exists and is non-zero. If you wish to include an alternative text when the value is non-existant or zero, use the format \code{\{\textit{label}?\textit{if non-zero}|\textit{if zero}?\textit{label}\}}.
 
@@ -440,7 +442,7 @@ The keys are used to identify the rule. Environment content rules are simply spe
 
 The list of parser states is in order of increasing priority: i.e. when a parser state is specified as a rule for parsing a parameter or environment content, this will only take effect if it has higher priority than the current state. Thus, text within an ignored or excluded region will not be counted.
 
-The formerly used numberic codes are listed at the end of the keyword list for each state. Before version 4, these numeric codes were used to specify parsing rules, but although these should still work, using the named keywords is highly recommended.
+The formerly used numberic codes are listed at the end of the keyword list for each state. Before version 3, these numeric codes were used to specify parsing rules, but although these should still work, using the named keywords is highly recommended.
 
 The transitional states indicates an incrementation of one of the counters and then change to another state: e.g. if the \code{header} rule is specified, this will first cause the header counter to be incremented, and then a change to the \code{headerword} state in which word counts are added to the header word counter. 
 
@@ -528,7 +530,7 @@ Examples of uses:
 \subsection{Specifying file inclusion macros}
 
 In addition to \code{\bs{input}} and \code{\bs{include}}, which are the standard \LaTeX{} macros for file inclusion, there are packages such as \code{import} intended to enable organising files into subfolders. \TeXcount{}, from version~3, adds some support for macros that change the path from which files are included. If the user needs to add additional file inclusion macros, the format is
-\codeline{\%TC:fileinclusion \parm{macro} \parm{file-parameters}}
+\codeline{\%TC:fileinclude \parm{macro} \parm{file-parameters}}
 where the file parameters are a comma separated list of keywords, each corresponding to a macro parameter. Available parameters are:
 %
 \begin{description}
@@ -717,7 +719,7 @@ Perl will first process the setup section which defines global variables, arrays
 
 The \TeXcount{} package---script and accompanying documents---is distributed
 under the \LaTeX{} Project Public License (LPPL)
-\codeline{\url{http://www.latex-project.org/lppl.txt}}
+\codeline{\url{https://www.latex-project.org/lppl.txt}}
 which grants you, the user, the right to use, modify and distribute
 the script. However, if the script is modified, you must change its
 name or use other technical means to avoid confusion with the original script.

@@ -65,7 +65,7 @@ sub _TeXcode_blank {
   my ($file,$title)=@_;
   if (defined $title) {}
   elsif (defined $file) {$title='File: '.$file;}
-  else {$title='Word count';}
+  #else {$title='Word count';}  # Leave undefined
   my %TeX=();
   $TeX{'errorcount'}=0;
   $TeX{'warnings'}={};

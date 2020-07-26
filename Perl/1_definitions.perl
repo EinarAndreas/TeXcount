@@ -24,7 +24,7 @@ my $STYLE_EMPTY=' ';
 my $STYLE_BLOCK='-';
 my $NOSTYLE=' ';
 $STYLES{'Errors'}={'error'=>'bold red','note'=>'bold white'};
-$STYLES{'Words'}={'word'=>'blue','hword'=>'bold blue','oword'=>'blue','altwd'=>'blue'};
+$STYLES{'Words'}={'word'=>'blue','hword'=>'bold blue','oword'=>'blue','altwd'=>'magenta'};
 $STYLES{'Macros'}={'cmd'=>'green','fileinc'=>'bold green','special'=>'bold red','specarg'=>'red'};
 $STYLES{'Options'}={'option'=>'yellow','optparm'=>'green'};
 $STYLES{'Ignored'}={'ignore'=>'cyan','math'=>'magenta'};
