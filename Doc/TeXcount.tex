@@ -293,7 +293,7 @@ parameters to ignore following a given macro.)
 
 \item[Macroword]This type of rule indicates that the macro itself represents one or more words. Initially, \code{\bs{LaTeX}} and \code{\bs{TeX}} are defined with values 1 indicating that each represents one word.
 
-\item[Preamble]A few macros should be counted even if they are in the preamble. In particular, \code{\bs{title}\{title text\}} is counted as a header assuming it will later be used to produce a title.
+\item[Preamble]A few macros should be counted even if they are in the preamble. In particular, \code{\bs{title}\{\textit{title text}\}} is counted as a header assuming it will later be used to produce a title.
 
 \item[Float inclusion]Within floats (environments with the \code{float} parsing rule) there may be texts that should still be counted: in particular captions. These are specified with the float inclusion rule.
 
@@ -312,7 +312,7 @@ Some macros do not follow the pattern used by \TeXcount{} to represent macro han
 
 \item[file include]If \code{-inc} is specified, included files will also be parsed and the total presented at the end. Initially, \code{\bs{input}} and \code{\bs{include}} trigger file inclusion, but more file inclusion macros may be added to the \code{\%TeXfileinclude} hash. In addition to potentially triggering file inclusion, the syntax may differ in that \code{input} does not require the file name to be enclosed in \code{\{\ldots\}}.
 
-\item[package include]When packages are included using \code{\bs{usepackage}{name}}, \TeXcount{} will check for package specific macro handling rules to include. Initially, only \code{\bs{usepackage}} triggers package inclusion, but more macros may be added to the \code{\%TeXpackageinc} hash.
+\item[package include]When packages are included using \code{\bs{usepackage}\{\textit{name}\}}, \TeXcount{} will check for package specific macro handling rules to include. Initially, only \code{\bs{usepackage}} triggers package inclusion, but more macros may be added to the \code{\%TeXpackageinc} hash.
 
 \end{description}
 
@@ -389,6 +389,8 @@ Alternatively, you can specify tempates within the document itself using the \Te
 The counts may be included by using the counter keywords---\code{word}, \code{headerword}, etc---or arithmetic combinations of these, eg \code{word+otherword+2*headerword}. Other codes that may be inserted are: \code{\{SUM\}} to insert the count as specified by the \code{-sum} option, \code{\{TITLE\}} for the title (e.g. section name) and a header (same as title unless \TeXcount{} has replaced it), \code{\{ERROR\}} for the number of parsing errors, \code{\{WARNINGS\}} for the number of distinct warnings, or \code{\{NWARNINGS\}} for the total number of warnings. Some of these also have shortened forms\footnote{Previously, one-letter versions of some of these codes were permitted, but that is no longer the case.} like \code{\{ERR\}} and \code{\{WARN\}}.
 
 Conditional inclusion may be performed using the format \code{\{\textit{label}?\ldots?\textit{label}\}} where \code{\textit{label}} is one of the counter keywords, \code{SUM}, \code{ERROR} or \code{TITLE} (or their alternative forms). The enclosed text will then be included only if the corresponding value exists and is non-zero. If you wish to include an alternative text when the value is non-existant or zero, use the format \code{\{\textit{label}?\textit{if non-zero}|\textit{if zero}?\textit{label}\}}.
+
+If all you want is to replace missing or null values with an alternative text, you can use \code{\{\textit{label}|\textit{null-text}\}}, which will give the value of the counter if non-zero, otherwise the alternative null-text.
 
 Subcounts, e.g. per section, may be included by using \code{\{SUB|\textit{template}|SUB\}} with a separate template text specified for the subcounts. This will only be included if there is more than one subcount, and in order to conditionally include prefix and suffix you may use \code{\{SUB?\textit{prefix}|\textit{template}|\textit{suffix}?SUB\}}.
 
@@ -526,6 +528,26 @@ Examples of uses:
 \newcommand\acknowledge{\section*{Acknowledgements}}
 \end{lstlisting}
 
+
+\subsection{Counting numbers separately}
+
+By default, \TeXcount{} has a set of characters allowed within words, and identifies words as any sequence of
+these characters. As a consequence, it does not distinguish between words composed entirely of letters, numbers, and
+words containing a mix of letters and digits.
+
+It is possible\footnote{The ability to count different types of words separately was introduces in \TeXcount{} version 3.2.}
+to specify \code{wordtype} rules that changes how words of type \code{number}, \code{mixed}, and \code{nonum} (pure words with no digits) are counted. This is done by adding \TeXcount{} instructions of the following format:
+\codeline{\%TC:wordtype \textit{original-rule} \textit{wordtype} \textit{new-rule}}
+The rules will usually just correspond to the original counter, so in order to specify that a number originally counted as a word within the main text should be counted using a separate counter, you may add the following code:
+%
+\begin{lstlisting}
+%TC:newcounter textnumber Numbers in text
+%TC:wordtype word number textnumber
+\end{lstlisting}
+%
+Whenever \TeXcount{} encounters a word parsed as \code{word} (alias of \code{text}), it checks if it matches the pattern for word type \code{number}, and if it does changes the counting rule to \code{textnumber}.
+
+\textit{NB: Note that this has been added as an experimental feature, and may change in future versions of \TeXcount{}.}
 
 \subsection{Specifying file inclusion macros}
 

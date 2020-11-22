@@ -17,6 +17,7 @@ my $includeTeX=$INCLUDE_NONE; # Flag to parse included files
 my $includeBibliography=0; # Flag to include bibliography
 my %substitutions; # Substitutions to make globally
 my %IncludedPackages; # List of included packages
+my $DefaultPackageOption='default'; # Set of packages to be included by default
 
 # Counting options
 my @sumweights; # Set count weights for computing sum

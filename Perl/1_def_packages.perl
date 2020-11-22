@@ -1,7 +1,9 @@
 ### Package rule definitions
 
 # Packages included by default
-my @DefaultPackages=('amsmath');
+my %DefaultPackages;
+$DefaultPackages{'none'} = [' invalidmath'];
+$DefaultPackages{'default'} = [@{$DefaultPackages{'none'}},'amsmath'];
 
 # Hashes storing package specific rules
 my %PackageTeXpreamble=(); # TeXpreamble definitions per package
@@ -13,26 +15,38 @@ my %PackageTeXenvir=(); # TeXenvir definitions per package
 my %PackageTeXfileinclude=(); # TeXfileinclude definitions per package
 my %PackageSubpackage=(); # Subpackages to include (listed in array [...])
 
-
 # Rules for bibliography inclusion
 $PackageTeXmacrocount{'%incbib'}={'beginthebibliography'=>['header','hword']};
 $PackageTeXmacro{'%incbib'}={'\bibliography'=>1};
 $PackageTeXenvir{'%incbib'}={'thebibliography'=>'text'};
 $PackageTeXfileinclude{'%incbib'}={'\bibliography'=>'<bbl>'};
 
+# Rules fixing math used outside math environments
+$PackageTeXenvir{' invalidmath'}={};
+add_keys_to_hash($PackageTeXenvir{' invalidmath'},'inlinemath',
+    'array');
+
 # Rules for package alltt
 $PackageTeXenvir{'alltt'}={
     'alltt'=>'xall'};
 
 # Rules for package amsmath
-$PackageTeXenvir{'amsmath'}={
-    'multline'=>'displaymath','multline*'=>'displaymath',
-    'gather'=>'displaymath','gather*'=>'displaymath',
-    'align'=>'displaymath','align*'=>'displaymath',
-    'flalign'=>'displaymath','flalign*'=>'displaymath',
-    'alignat'=>'displaymath','alignat*'=>'displaymath'};
+$PackageTeXenvir{'amsmath'}={};
+add_keys_to_hash($PackageTeXenvir{'amsmath'}, 'displaymath',
+    'multline','multline*','gather','gather*','align','align*',
+    'flalign','flalign*','alignat','alignat*');
+add_keys_to_hash($PackageTeXenvir{'amsmath'}, 'inlinemath',
+    'aligned','alignedat','gathered','split','matrix','bmatrix','pmatrix',
+    'Bmatrix','vmatrix','Vmatrix','smallmatrix','cases','dcases',
+    'subequations');
 $PackageTeXmacro{'amsmath'}={
-    'beginalignat'=>1, 'beginalignat*'=>1};
+    'beginalignat'=>1, 'beginalignat*'=>1, '\bordermatrix'=>['ignore','ignore']};
+
+# Rules for package amsthm    
+$PackageTeXmacro{'amsthm'}={
+    '\newtheorem'=>['ignore','ignore'], '\newtheorem*'=>['ignore','ignore'],
+    '\newtheoremstyle'=>['ignore','ignore','ignore','ignore','ignore','ignore','ignore','ignore'],
+    '\theoremstyle'=>['ignore']};
 
 # Rules for package babel
 # NB: Only core macros implemented, those expected found in regular documents
@@ -49,8 +63,12 @@ $PackageTeXmacro{'cleveref'}={
     '\crefrange'=>['ignore','ignore'], '\Crefrange'=>['ignore','ignore'],
     '\crefrange*'=>['ignore','ignore'], '\Crefrange*'=>['ignore','ignore'],
     '\cpageref'=>['ignore'], '\Cpageref'=>['ignore'],
-    '\cpagerefrange'=>['ignore','ignore'], '\Cpagerefrange'=>['ignore','ignore']
-};
+    '\cpagerefrange'=>['ignore','ignore'], '\Cpagerefrange'=>['ignore','ignore'],
+    '\crefname'=>['ignore','ignore','ignore'], '\Crefname'=>['ignore','ignore','ignore'],
+    '\crefformat'=>['ignore','ignore'], '\Crefformat'=>['ignore','ignore'],
+    '\crefrangeformat'=>['ignore','ignore'], '\Crefrangeformat'=>['ignore','ignore'],
+    '\crefmultiformat'=>['ignore','ignore','ignore','ignore','ignore'],
+    '\Crefmultiformat'=>['ignore','ignore','ignore','ignore','ignore']};
 
 # Rules for package comment
 $PackageTeXenvir{'comment'}={
@@ -64,6 +82,9 @@ $PackageTeXmacro{'color'}={
 
 # Rules for package endnotes
 $PackageTeXmacro{'endnotes'}={'\endnote'=>['oword'],'\endnotetext'=>['oword'],'\addtoendnotetext'=>['oword']};
+
+# Rules for package environ
+$PackageTeXmacro{'environ'}={'\NewEnviron'=>['ignore','ignore']};
 
 # Rules for package etoolbox
 $PackageTeXmacro{'etoolbox'}={'\apptocmd'=>['xxx','ignore','ignore','ignore'],
@@ -114,6 +135,9 @@ $PackageTeXmacro{'inputenc'}={
 # Rules for package listings
 $PackageTeXenvir{'listings'}={'lstlisting'=>'xall'};
 $PackageTeXmacro{'listings'}={'\lstset'=>['ignore'],'\lstinputlisting'=>['ignore']};
+
+# Rules for package mhchem
+$PackageTeXmacro{'mhchem'}={'\ce'=>['ignore']};
 
 # Rules for package psfig
 $PackageTeXmacro{'psfig'}={'\psfig'=>1};

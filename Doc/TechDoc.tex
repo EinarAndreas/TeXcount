@@ -273,7 +273,7 @@ Each count has a fixed position in the array, and the \code{\$CNT_\wild} constan
 
 The parsing states fall into two categories.
 
-First there are parsing states used during the parsing of a unit/block: e.g. \code{\$STATE_TEXT}, \code{\$STATE_MATH}, \code{\$STATE_IGNORE}, ldots. In some of the states, words are counted either as text words, header words or captions words; in other states, words are ignored and the state primarily influences how the parsed \LaTeX{} code is styled in the verbose output.
+First there are parsing states used during the parsing of a unit/block: e.g. \code{\$STATE_TEXT}, \code{\$STATE_MATH}, \code{\$STATE_IGNORE}, \ldots. In some of the states, words are counted either as text words, header words or captions words; in other states, words are ignored and the state primarily influences how the parsed \LaTeX{} code is styled in the verbose output.
 
 Secondly, there are transitional states: e.g. \code{\$STATE_TO_HEADER} which indicates the start of a header which should first cause the header count to be incremented and then the contained text to be parsed as header text using the parsing state \code{\$STATE_TEXT_HEADER}. The handling of the transitional states are encoded in \code{\%transition2state} and performed by the \code{transition_to_content_state} routine which is called by \code{_parse_unit}.
 
@@ -409,7 +409,7 @@ The entry point for parsing a \LaTeX{} document is the \code{parse} routine. Thi
 
 The \code{_parse_unit} routine is called with a \Obj{TeXcode} object, a parsing state, and optionally an unit-ending token as arguments. It then calls \code{next_token} on the \Obj{TeXcode} object until the unit-ending token is reached: if the file ends before this is found, an error is reported. If no unit-ending token is provided, only one unit will be parsed. If the unit-ending token is set to \code{\$_PARAM_}, indicating that the unit to be parsed is a macro parameter, the \code{\$simple_token} flag is set and passed to \code{next_token} to avoid combining letters into words, and only one token is parsed before returning.
 
-For each token, depending on the token, token type, and active parsing state, \code{_parse_unit} decides how the token should be interpreted. In some cases, the interpretation is done within \code{_parse_unit}, but in many cases the interpretation is delegated to subroutines like \code{_parse_macro}, \code{_parse_math}, etc. If new groups (\code{\{\ldots\}} or \code{\bs{begin}\ldots\bs{end}}) are encountered, this causes \code{_parse_unit} to be cause recursively with an unit-ending token passed to \code{_parse_unit} to identify the group end.
+For each token, depending on the token, token type, and active parsing state, \code{_parse_unit} decides how the token should be interpreted. In some cases, the interpretation is done within \code{_parse_unit}, but in many cases the interpretation is delegated to subroutines like \code{_parse_macro}, \code{_parse_math}, etc. If new groups (\code{\{\ldots\}} or \code{\bs{begin}\ldots\bs{end}}) are encountered, this causes \code{_parse_unit} to be called recursively with an unit-ending token passed to \code{_parse_unit} to identify the group end.
   
 Note that by default, even blocks that are to be ignored are parsed and required balanced units. Different exclude states exist to deal with cases in which the unit should not be completely parsed.
 
@@ -432,6 +432,12 @@ If the optional \code{\$simple_token} flag is set, only simple tokens will be re
 In \code{_parse_unit}, based on the parsing state and parsed token, it is decided how to interpret and process the token. In some cases, this processing is restricted to the parsed token itself: counting or ignoring it as well as deciding on the style with which it should be presented in the verbose output.
 
 In some cases, the token influences the parsing of subsequent text: e.g. macros can take parameters and options. Special subroutines exist to handle parsing of macro parameters, gobble up spaces or macro parameters, or handle ignored regions.
+
+When encountering a macro or environment, the parsing rules instruct \TeXcount{} how the parameters and content should be parsed: this is done by specifying a parsing state for each unit. The parsing states are ordered into a hierarchy of priority, and if the original state has higher priority then the state indicated by the parsing rule, the original parsing state is retained. This ensures that eg a macro indicating that a parameter should be counted as text will not couse text in an ignored region to be couted, or words within a header to be counted as regular text.
+
+The hierarchy of states is contained in three lists: \code{@STATE_FIRST_PRIORITY}, \code{@STATE_MID_PRIORITY}, and \code{@STATE_LAST_PRIORITY}. The first and last are strict hierarchies, while the states in the middle one all have the same priority. In general, states that count words are in the last priority segment, states that do not count the content are in the first priority segment, while user defined states (corresponding to user defined counters) are in the mid segment.
+
+There is one exception to the application of state priority. When in the FLOAT state, ie inside a floating environment, macros defined as float included are enforced. This allows counting of eg captions within floating enviroments despite word counting states having lower priority.
 
 
 \subsection{Verbose output}

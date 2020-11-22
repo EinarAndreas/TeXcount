@@ -21,7 +21,7 @@ add_keys_to_hash(\%TeXpreamble,['xxx','xxx','xxx'],'\newenvironment','\renewenvi
 ### In floats: include only specific macros
 # Macros used to identify caption text within floats.
 # Gets added to TeXmacro. Is used within floats only.
-my %TeXfloatinc=('\caption'=>['otherword']);
+my %TeXfloatinc=('\caption'=>['[','ignore','otherword']);
 
 ### How many tokens to gobble after macro
 # Each macro is assumed to gobble up a given number of
@@ -46,14 +46,41 @@ add_keys_to_hash(\%TeXmacro,['[','text'],
     '\item');
 add_keys_to_hash(\%TeXmacro,['[','ignore'],
     '\linebreak','\nolinebreak','\pagebreak','\nopagebreak');
-add_keys_to_hash(\%TeXmacro,0,
+add_keys_to_hash(\%TeXmacro,['nooption'],
+    '\left','\right','\parallel','\dashv','\in','\smile','\models','\perp','\mid',
+    '\big','\Big','\bigg','\Bigg','\lceil','\rceil','\lfloor','\rfloor',
+    '\N','\Z','\Q','\R','\C','\O','\emptyset','\varnothing',
+    '\subset','\supset','\subseteq','\supseteq','\sqsubset','\sqsupset','\sqsubseteq','\sqsupseteq',
+    '\pm','\diamond','\oplus','\mp','\bigtriangleup','\ominus','\times','\uplus','\bigtriangledown',
+    '\otimes','\div','\sqcap','\triangleleft','\oslash','\ast','\sqcup','\triangleright',
+    '\odot','\star','\vee','\bigcirc','\circ','\dagger','\wedge','\bullet',
+    '\setminus','\ddagger','\cdot','\wr','\amalg',
+    '\exists','\nexists','\forall','\neg','\lor','\land','\Longrightarrow','\implies',
+    '\Rightarrow','\Longleftarrow','\Leftarrow','\iff','\Leftrightarrow','\top','\bot',
+    '\overline','\overrightarrow','\angle','\measuredangle','\triangle','\square','\ncong','\nsim',
+    '\nparallel','\perp','\not',
+    '\sum','\int','\cup','\cap','\biguplus','\bigoplus','\bigvee','\prod','\oint',
+    '\bigcap','\bigotimes','\bigwedge','\coprod','\iint','\bigcup','\bigodot','\bigsqcup',
+    '\leq','\geq','\leqslant','\geqslant','\prec','\succ','\preceq','\succeq',
+    '\ll','\gg','\lll','\ggg','\doteq','\equiv','\cong','\simeq','\sim','\propto',
+    '\neq','\ne','\notin','\nless','\ngtr','\nleq','\ngeq','\nleqslant','\ngeqslant',
+    '\nleqq','\ngeqq','\lneq','\gneq','\lneqq','\gneqq','\lvertneqq','\gvertneqq',
+    '\lnsim','\gnsim','\lnapprox','\gnapprox','\nprec','\nsucc','\npreceq','\nsucceq',
+    '\precneqq','\succneqq','\precnsim','\succnsim','\precnapprox','\succnapprox','\nsim',
+    '\ncong','\nshortmid','\nshortparallel','\nmid','\nparallel','\nvdash','\nvDash',
+    '\nVdash','\nVDash','\ntriangleleft','\ntriangleright','\ntrianglelefteq','\ntrianglerighteq',
+    '\nsubseteq','\nsupseteq','\nsubseteqq','\nsupseteqq','\subsetneq','\supsetneq','\varsubsetneq',
+    '\varsupsetneq','\subsetneqq','\supsetneqq','\varsubsetneqq','\varsupsetneqq',
+    '\sin','\arcsin','\csc','\arccsc','\cos','\arccos','\sec','\arcsec','\tan','\arctan','\cot','\arccot',
+    '\sinh','\cosh','\tanh','\coth',
     '\maketitle','\indent','\noindent',
     '\centering','\raggedright','\raggedleft','\clearpage','\cleardoublepage','\newline','\newpage',
     '\smallskip','\medskip','\bigskip','\vfill','\hfill','\hrulefill','\dotfill',
     '\normalsize','\small','\footnotesize','\scriptsize','\tiny','\large','\Large','\LARGE','\huge','\Huge',
     '\normalfont','\em','\rm','\it','\bf','\sf','\tt','\sc','\sl',
     '\rmfamily','\sffamily','\ttfamily','\upshape','\itshape','\slshape','\scshape','\mdseries','\bfseries',
-    '\selectfont',
+    '\selectfont');
+add_keys_to_hash(\%TeXmacro,0,
     '\tableofcontents','\listoftables','\listoffigures');
 add_keys_to_hash(\%TeXmacro,1,
     '\begin','\end',

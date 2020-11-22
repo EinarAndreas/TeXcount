@@ -172,12 +172,12 @@ sub __print_subcounts_using_template {
 sub __process_template {
   my ($template,$label,$value)=@_;
   if ($value) {
-    $template=~s/\{($label)\?([^\?\{\}]+?)\}/\{$label\}/gis;
-    $template=~s/\{($label)\?(.*?)(\|(.*?))?\?(\1)\}/$2/gis;
+    $template=~s/\{($label)\|([^\|\{\}]+?)\}/\{$label\}/gis;  # {label|misstext}
+    $template=~s/\{($label)\?(.*?)(\|(.*?))?\?(\1)\}/$2/gis;  # {label?valuetext[|misstext]?label}
   } else {
-    $template=~s/\{($label)\?([^\?\{\}]+?)\}/$2/gis;
-    $template=~s/\{($label)\?(.*?)\|(.*?)\?(\1)\}/$3/gis;
-    $template=~s/\{($label)\?(.*?)\?(\1)\}//gis;
+    $template=~s/\{($label)\|([^\|\{\}]+?)\}/$2/gis;  # {label|misstext}
+    $template=~s/\{($label)\?(.*?)\|(.*?)\?(\1)\}/$3/gis;  # {label?valuetext|misstext?label}
+    $template=~s/\{($label)\?(.*?)\?(\1)\}//gis;  # {label?valuetext?label}
   }
   if (!defined $value) {$value='';}
   $template=~s/\{($label)\}/$value\a/gis;

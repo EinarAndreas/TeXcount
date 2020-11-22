@@ -15,7 +15,7 @@ Defines macro handling rule for the specified macro. The parameter is on the for
 This specifies the handling of environments with the given name. The parameter handling rule, applied to parameters following \code{\bs{begin}\{\textit{name}\}}, are specified as in the \code{macro} instruction. The second parameter specifies the rule, i.e. parser state, with which the contents should be parsed.
 
 \option[wordtype \parm{original-rule} \parm{wordtype} \parm{changed-rule}]
-\TeXcount can distinguish between \code{number}, \code{mixed}, and \code{nonum}: numbers on various formats, words that includes digits, and words that do not contain any digits.
+\TeXcount{} can distinguish between \code{number}, \code{mixed}, and \code{nonum}: numbers on various formats, words that includes digits, and words that do not contain any digits.
 The \code{wordtype} specification indicates that words of a given \parm{wordtype} which were originally counted using \parm{original-rule}, should instead be counted using \parm{changed-rule}.
 \textit{NB: Experimental feature, may change!}
 

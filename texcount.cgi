@@ -7,8 +7,8 @@ use CGI::Carp qw(warningsToBrowser fatalsToBrowser set_message);
 set_message('Please send information about this error to einarro@ifi.uio.no together with the text or file that caused it.');
 
 ##### Version information
-my $versionnumber="3.2.beta.16";
-my $versiondate="2020 Jul 25";
+my $versionnumber="3.2";
+my $versiondate="2020 Aug 04";
 
 
 
@@ -50,6 +50,7 @@ my $includeTeX=$INCLUDE_NONE; # Flag to parse included files
 my $includeBibliography=0; # Flag to include bibliography
 my %substitutions; # Substitutions to make globally
 my %IncludedPackages; # List of included packages
+my $DefaultPackageOption='default'; # Set of packages to be included by default
 
 # Counting options
 my @sumweights; # Set count weights for computing sum
@@ -598,7 +599,7 @@ add_keys_to_hash(\%TeXpreamble,['xxx','xxx','xxx'],'\newenvironment','\renewenvi
 ### In floats: include only specific macros
 # Macros used to identify caption text within floats.
 # Gets added to TeXmacro. Is used within floats only.
-my %TeXfloatinc=('\caption'=>['otherword']);
+my %TeXfloatinc=('\caption'=>['[','ignore','otherword']);
 
 ### How many tokens to gobble after macro
 # Each macro is assumed to gobble up a given number of
@@ -623,14 +624,41 @@ add_keys_to_hash(\%TeXmacro,['[','text'],
     '\item');
 add_keys_to_hash(\%TeXmacro,['[','ignore'],
     '\linebreak','\nolinebreak','\pagebreak','\nopagebreak');
-add_keys_to_hash(\%TeXmacro,0,
+add_keys_to_hash(\%TeXmacro,['nooption'],
+    '\left','\right','\parallel','\dashv','\in','\smile','\models','\perp','\mid',
+    '\big','\Big','\bigg','\Bigg','\lceil','\rceil','\lfloor','\rfloor',
+    '\N','\Z','\Q','\R','\C','\O','\emptyset','\varnothing',
+    '\subset','\supset','\subseteq','\supseteq','\sqsubset','\sqsupset','\sqsubseteq','\sqsupseteq',
+    '\pm','\diamond','\oplus','\mp','\bigtriangleup','\ominus','\times','\uplus','\bigtriangledown',
+    '\otimes','\div','\sqcap','\triangleleft','\oslash','\ast','\sqcup','\triangleright',
+    '\odot','\star','\vee','\bigcirc','\circ','\dagger','\wedge','\bullet',
+    '\setminus','\ddagger','\cdot','\wr','\amalg',
+    '\exists','\nexists','\forall','\neg','\lor','\land','\Longrightarrow','\implies',
+    '\Rightarrow','\Longleftarrow','\Leftarrow','\iff','\Leftrightarrow','\top','\bot',
+    '\overline','\overrightarrow','\angle','\measuredangle','\triangle','\square','\ncong','\nsim',
+    '\nparallel','\perp','\not',
+    '\sum','\int','\cup','\cap','\biguplus','\bigoplus','\bigvee','\prod','\oint',
+    '\bigcap','\bigotimes','\bigwedge','\coprod','\iint','\bigcup','\bigodot','\bigsqcup',
+    '\leq','\geq','\leqslant','\geqslant','\prec','\succ','\preceq','\succeq',
+    '\ll','\gg','\lll','\ggg','\doteq','\equiv','\cong','\simeq','\sim','\propto',
+    '\neq','\ne','\notin','\nless','\ngtr','\nleq','\ngeq','\nleqslant','\ngeqslant',
+    '\nleqq','\ngeqq','\lneq','\gneq','\lneqq','\gneqq','\lvertneqq','\gvertneqq',
+    '\lnsim','\gnsim','\lnapprox','\gnapprox','\nprec','\nsucc','\npreceq','\nsucceq',
+    '\precneqq','\succneqq','\precnsim','\succnsim','\precnapprox','\succnapprox','\nsim',
+    '\ncong','\nshortmid','\nshortparallel','\nmid','\nparallel','\nvdash','\nvDash',
+    '\nVdash','\nVDash','\ntriangleleft','\ntriangleright','\ntrianglelefteq','\ntrianglerighteq',
+    '\nsubseteq','\nsupseteq','\nsubseteqq','\nsupseteqq','\subsetneq','\supsetneq','\varsubsetneq',
+    '\varsupsetneq','\subsetneqq','\supsetneqq','\varsubsetneqq','\varsupsetneqq',
+    '\sin','\arcsin','\csc','\arccsc','\cos','\arccos','\sec','\arcsec','\tan','\arctan','\cot','\arccot',
+    '\sinh','\cosh','\tanh','\coth',
     '\maketitle','\indent','\noindent',
     '\centering','\raggedright','\raggedleft','\clearpage','\cleardoublepage','\newline','\newpage',
     '\smallskip','\medskip','\bigskip','\vfill','\hfill','\hrulefill','\dotfill',
     '\normalsize','\small','\footnotesize','\scriptsize','\tiny','\large','\Large','\LARGE','\huge','\Huge',
     '\normalfont','\em','\rm','\it','\bf','\sf','\tt','\sc','\sl',
     '\rmfamily','\sffamily','\ttfamily','\upshape','\itshape','\slshape','\scshape','\mdseries','\bfseries',
-    '\selectfont',
+    '\selectfont');
+add_keys_to_hash(\%TeXmacro,0,
     '\tableofcontents','\listoftables','\listoffigures');
 add_keys_to_hash(\%TeXmacro,1,
     '\begin','\end',
@@ -731,7 +759,9 @@ convert_hash(\%TeXenvir,\&key_to_state);
 ### Package rule definitions
 
 # Packages included by default
-my @DefaultPackages=('amsmath');
+my %DefaultPackages;
+$DefaultPackages{'none'} = [' invalidmath'];
+$DefaultPackages{'default'} = [@{$DefaultPackages{'none'}},'amsmath'];
 
 # Hashes storing package specific rules
 my %PackageTeXpreamble=(); # TeXpreamble definitions per package
@@ -743,26 +773,38 @@ my %PackageTeXenvir=(); # TeXenvir definitions per package
 my %PackageTeXfileinclude=(); # TeXfileinclude definitions per package
 my %PackageSubpackage=(); # Subpackages to include (listed in array [...])
 
-
 # Rules for bibliography inclusion
 $PackageTeXmacrocount{'%incbib'}={'beginthebibliography'=>['header','hword']};
 $PackageTeXmacro{'%incbib'}={'\bibliography'=>1};
 $PackageTeXenvir{'%incbib'}={'thebibliography'=>'text'};
 $PackageTeXfileinclude{'%incbib'}={'\bibliography'=>'<bbl>'};
 
+# Rules fixing math used outside math environments
+$PackageTeXenvir{' invalidmath'}={};
+add_keys_to_hash($PackageTeXenvir{' invalidmath'},'inlinemath',
+    'array');
+
 # Rules for package alltt
 $PackageTeXenvir{'alltt'}={
     'alltt'=>'xall'};
 
 # Rules for package amsmath
-$PackageTeXenvir{'amsmath'}={
-    'multline'=>'displaymath','multline*'=>'displaymath',
-    'gather'=>'displaymath','gather*'=>'displaymath',
-    'align'=>'displaymath','align*'=>'displaymath',
-    'flalign'=>'displaymath','flalign*'=>'displaymath',
-    'alignat'=>'displaymath','alignat*'=>'displaymath'};
+$PackageTeXenvir{'amsmath'}={};
+add_keys_to_hash($PackageTeXenvir{'amsmath'}, 'displaymath',
+    'multline','multline*','gather','gather*','align','align*',
+    'flalign','flalign*','alignat','alignat*');
+add_keys_to_hash($PackageTeXenvir{'amsmath'}, 'inlinemath',
+    'aligned','alignedat','gathered','split','matrix','bmatrix','pmatrix',
+    'Bmatrix','vmatrix','Vmatrix','smallmatrix','cases','dcases',
+    'subequations');
 $PackageTeXmacro{'amsmath'}={
-    'beginalignat'=>1, 'beginalignat*'=>1};
+    'beginalignat'=>1, 'beginalignat*'=>1, '\bordermatrix'=>['ignore','ignore']};
+
+# Rules for package amsthm    
+$PackageTeXmacro{'amsthm'}={
+    '\newtheorem'=>['ignore','ignore'], '\newtheorem*'=>['ignore','ignore'],
+    '\newtheoremstyle'=>['ignore','ignore','ignore','ignore','ignore','ignore','ignore','ignore'],
+    '\theoremstyle'=>['ignore']};
 
 # Rules for package babel
 # NB: Only core macros implemented, those expected found in regular documents
@@ -779,8 +821,12 @@ $PackageTeXmacro{'cleveref'}={
     '\crefrange'=>['ignore','ignore'], '\Crefrange'=>['ignore','ignore'],
     '\crefrange*'=>['ignore','ignore'], '\Crefrange*'=>['ignore','ignore'],
     '\cpageref'=>['ignore'], '\Cpageref'=>['ignore'],
-    '\cpagerefrange'=>['ignore','ignore'], '\Cpagerefrange'=>['ignore','ignore']
-};
+    '\cpagerefrange'=>['ignore','ignore'], '\Cpagerefrange'=>['ignore','ignore'],
+    '\crefname'=>['ignore','ignore','ignore'], '\Crefname'=>['ignore','ignore','ignore'],
+    '\crefformat'=>['ignore','ignore'], '\Crefformat'=>['ignore','ignore'],
+    '\crefrangeformat'=>['ignore','ignore'], '\Crefrangeformat'=>['ignore','ignore'],
+    '\crefmultiformat'=>['ignore','ignore','ignore','ignore','ignore'],
+    '\Crefmultiformat'=>['ignore','ignore','ignore','ignore','ignore']};
 
 # Rules for package comment
 $PackageTeXenvir{'comment'}={
@@ -794,6 +840,9 @@ $PackageTeXmacro{'color'}={
 
 # Rules for package endnotes
 $PackageTeXmacro{'endnotes'}={'\endnote'=>['oword'],'\endnotetext'=>['oword'],'\addtoendnotetext'=>['oword']};
+
+# Rules for package environ
+$PackageTeXmacro{'environ'}={'\NewEnviron'=>['ignore','ignore']};
 
 # Rules for package etoolbox
 $PackageTeXmacro{'etoolbox'}={'\apptocmd'=>['xxx','ignore','ignore','ignore'],
@@ -844,6 +893,9 @@ $PackageTeXmacro{'inputenc'}={
 # Rules for package listings
 $PackageTeXenvir{'listings'}={'lstlisting'=>'xall'};
 $PackageTeXmacro{'listings'}={'\lstset'=>['ignore'],'\lstinputlisting'=>['ignore']};
+
+# Rules for package mhchem
+$PackageTeXmacro{'mhchem'}={'\ce'=>['ignore']};
 
 # Rules for package psfig
 $PackageTeXmacro{'psfig'}={'\psfig'=>1};
@@ -1204,8 +1256,8 @@ sub apply_language_options {
 
 # Apply default package inclusion
 sub apply_include_default_packages {
-  foreach (@DefaultPackages) {
-    print STDERR "Default include: $_\n";
+  my $dp = $DefaultPackages{$DefaultPackageOption};
+  foreach (@{$dp}) {
     include_package($_);
   }
 }
@@ -2961,12 +3013,12 @@ sub __print_subcounts_using_template {
 sub __process_template {
   my ($template,$label,$value)=@_;
   if ($value) {
-    $template=~s/\{($label)\?([^\?\{\}]+?)\}/\{$label\}/gis;
-    $template=~s/\{($label)\?(.*?)(\|(.*?))?\?(\1)\}/$2/gis;
+    $template=~s/\{($label)\|([^\|\{\}]+?)\}/\{$label\}/gis;  # {label|misstext}
+    $template=~s/\{($label)\?(.*?)(\|(.*?))?\?(\1)\}/$2/gis;  # {label?valuetext[|misstext]?label}
   } else {
-    $template=~s/\{($label)\?([^\?\{\}]+?)\}/$2/gis;
-    $template=~s/\{($label)\?(.*?)\|(.*?)\?(\1)\}/$3/gis;
-    $template=~s/\{($label)\?(.*?)\?(\1)\}//gis;
+    $template=~s/\{($label)\|([^\|\{\}]+?)\}/$2/gis;  # {label|misstext}
+    $template=~s/\{($label)\?(.*?)\|(.*?)\?(\1)\}/$3/gis;  # {label?valuetext|misstext?label}
+    $template=~s/\{($label)\?(.*?)\?(\1)\}//gis;  # {label?valuetext?label}
   }
   if (!defined $value) {$value='';}
   $template=~s/\{($label)\}/$value\a/gis;

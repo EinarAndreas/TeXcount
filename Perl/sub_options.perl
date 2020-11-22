@@ -179,8 +179,8 @@ sub apply_language_options {
 
 # Apply default package inclusion
 sub apply_include_default_packages {
-  foreach (@DefaultPackages) {
-    print STDERR "Default include: $_\n";
+  my $dp = $DefaultPackages{$DefaultPackageOption};
+  foreach (@{$dp}) {
     include_package($_);
   }
 }

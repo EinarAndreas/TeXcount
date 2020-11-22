@@ -1,10 +1,5 @@
 ################ TODO ################
 # +=important, -=medium, ?=maybe, H=help, D=documentation, W=web
-D Factor out version and year: use version file.
-D Hierarchy of states and how transitions are made.
-D Use of %TC:wordtype to make separate counts.
-D Added %TC:usepackage to add package rules.
-D Template format {label?misstext}.
 + Options to control default package inclusion.
 + Check on math macros, eg things like \left[.
 + Have %TC:floatinclude use existing rules if none is specified.
@@ -19,6 +14,7 @@ D Template format {label?misstext}.
 + Implement %TC conversion rules to handle \begin{envir}.
 + Implement: count characters including spaces.
 + In -sum= option, use counter names (not 1,1,1 format).
+- Handle \startmacro...\endmacro more dynamically.
 - Add method for adding custom wordtypes.
 - Add macro *-option gobbling rules for various macros.
 - Ability to subcount macro/environment content.
@@ -33,9 +29,21 @@ D Template format {label?misstext}.
 ? Multiple CSS alternatives in cgi version.
 ? Make executable (PAR::Packer)
 
+Packages to check:
+- citation packages (genericly)
+
+Bugs and issues for next version:
+- ${\cup[}$ $]$  ---  parsed as \cup[...] --- %TC:macro \cup [nooption] 
+- Address TODOs: automatic modifiers (*) and option gobbling at end
+- Allow multilone options by default (only within macro parameter list)
+
 
 ############### HISTORY ###############
-- Template format {label?misstext}.
+- Added nooption rule for many macros, eg math macros.
+- Documented hierarchy of states and how transitions are made.
+- Added package rules: amsmath, amsthm, mhchem, cleveref, environ.
+- Added $DefaultPackageOption with %DefaultPackages hash instead of single array.
+- Template format {label|misstext}.
 - CGI: Leave title undefined when no filename is given.
 - Added %TC:usepackage to add package rules.
 >>> Version 3.2.beta (2020 July 21) <<<

@@ -27,4 +27,8 @@ Define a new counter with the given name and description (optional). A correspon
 \option[newtemplate \optiontext{and} template \opt{template-line}]
 Specify a template for the summary output. The first line should just declare a new template using \code{\%TC:newtemplate}, while the subsequent lines use \code{\%TC:template} followed by text specifying the template. The line breaks in the template specification are not of importance: to specify a line break, use \code{\bs{n}}.
 
+\option[usepackage \opt{package(s)}]
+This will include the \TeXcount{} rules for the specified package(s). \TeXcount{} does this automatically when it encounters
+\code{\bs{usepackage}}.
+
 \end{description}
