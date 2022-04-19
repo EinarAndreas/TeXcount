@@ -744,7 +744,7 @@ add_keys_to_hash(\%TeXenvir,'displaymath',
 add_keys_to_hash(\%TeXenvir,'float',
     'float','picture','figure','figure*','table','table*');
 add_keys_to_hash(\%TeXenvir,'xall',
-    'verbatim','tikzpicture','comment');
+    'minted','verbatim','tikzpicture','comment');
 
 # Environment parameters
 my $PREFIX_ENVIR='begin'; # Prefix used for environment names
