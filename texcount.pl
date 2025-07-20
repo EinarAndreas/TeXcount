@@ -578,7 +578,7 @@ sub Is_punctuation { return <<END;
 +utf8::Punctuation
 -0024\t0025
 -005c
--007b\007e
+-007b\t007e
 END
 }
 
