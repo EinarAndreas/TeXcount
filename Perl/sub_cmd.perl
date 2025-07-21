@@ -36,7 +36,8 @@ sub include_file {
     };
   }
   if ($includeTeX==$INCLUDE_MERGE) {
-    my $bincode=read_binary($filepath) || BLOCK {
+    my $bincode=read_binary($filepath);
+    if (!defined $bincode) {
       error($tex,"File $filepath not readable.");
       return;
     };

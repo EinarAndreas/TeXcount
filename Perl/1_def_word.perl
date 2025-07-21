@@ -17,16 +17,17 @@
 
 # Patters matching a letter. Should be a single character or
 # ()-enclosed regex for substitution into word pattern regex.
-my @LetterMacros=qw/ae AE o O aa AA oe OE ss
+my @LetterMacros=qw/ae AE o O aa AA oe OE ss i j
    alpha beta gamma delta epsilon zeta eta theta iota kappa lamda
    mu nu xi pi rho sigma tau upsilon phi chi psi omega
    Gamma Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega 
    /;
 my $specialchars='\\\\('.join('|',@LetterMacros).')(\{\}|\s+|\b)';
-my $modifiedchars='\\\\[\'\"\`\~\^\=](@|\{@\})';
+my $modifiedchars='\\\\[\'\"\`\.\~\^\=\|](@|\{@\})';
+my $accentedchars='\\\\[bcCdfGhHkrtuUv]( @|\{@+\})';
 my %NamedLetterPattern;
 $NamedLetterPattern{'restricted'}='@';
-$NamedLetterPattern{'default'}='('.join('|','@',$modifiedchars,$specialchars,'[\.\,]\d').')';
+$NamedLetterPattern{'default'}='('.join('|','@',$modifiedchars,$accentedchars,$specialchars,'[\.\,]\d').')';
 $NamedLetterPattern{'relaxed'}=$NamedLetterPattern{'default'};
 my $LetterPattern=$NamedLetterPattern{'default'};
 

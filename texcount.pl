@@ -7,8 +7,8 @@ use Text::Wrap;
 use Term::ANSIColor;
 
 ##### Version information
-my $versionnumber="3.2";
-my $versiondate="2020 Aug 04";
+my $versionnumber="3.2.0.54";
+my $versiondate="2025 Jul 21";
 
 
 # System variables
@@ -49,7 +49,7 @@ my %GLOBALDATA=
    ('versionnumber'  => $versionnumber
    ,'versiondate'    => $versiondate
    ,'maintainer'     => 'Einar Andreas Rodland'
-   ,'copyrightyears' => '2008-2020'
+   ,'copyrightyears' => '2008-2025'
    ,'website'        => 'https://app.uio.no/ifi/texcount/'
    );
 
@@ -495,16 +495,17 @@ my %STYLE_DESC=(
 
 # Patters matching a letter. Should be a single character or
 # ()-enclosed regex for substitution into word pattern regex.
-my @LetterMacros=qw/ae AE o O aa AA oe OE ss
+my @LetterMacros=qw/ae AE o O aa AA oe OE ss i j
    alpha beta gamma delta epsilon zeta eta theta iota kappa lamda
    mu nu xi pi rho sigma tau upsilon phi chi psi omega
    Gamma Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega 
    /;
 my $specialchars='\\\\('.join('|',@LetterMacros).')(\{\}|\s+|\b)';
-my $modifiedchars='\\\\[\'\"\`\~\^\=](@|\{@\})';
+my $modifiedchars='\\\\[\'\"\`\.\~\^\=\|](@|\{@\})';
+my $accentedchars='\\\\[bcCdfGhHkrtuUv]( @|\{@+\})';
 my %NamedLetterPattern;
 $NamedLetterPattern{'restricted'}='@';
-$NamedLetterPattern{'default'}='('.join('|','@',$modifiedchars,$specialchars,'[\.\,]\d').')';
+$NamedLetterPattern{'default'}='('.join('|','@',$modifiedchars,$accentedchars,$specialchars,'[\.\,]\d').')';
 $NamedLetterPattern{'relaxed'}=$NamedLetterPattern{'default'};
 my $LetterPattern=$NamedLetterPattern{'default'};
 
@@ -578,7 +579,7 @@ sub Is_punctuation { return <<END;
 +utf8::Punctuation
 -0024\t0025
 -005c
--007b\007e
+-007b\t007e
 END
 }
 
@@ -1394,7 +1395,8 @@ sub include_file {
     };
   }
   if ($includeTeX==$INCLUDE_MERGE) {
-    my $bincode=read_binary($filepath) || BLOCK {
+    my $bincode=read_binary($filepath);
+    if (!defined $bincode) {
       error($tex,"File $filepath not readable.");
       return;
     };

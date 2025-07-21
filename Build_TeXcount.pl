@@ -77,6 +77,9 @@ sub Build {
   if ($opt eq 'cmd') {
     AppendFile("sub_cmd_filehandle.perl","TeX file reader");
   }
+  if ($opt eq 'cgi') {
+    AppendFile("sub_cgi_crypto.perl","Encryption routines");
+  }
   AppendFile("sub_errors.perl","Error handling");
   AppendFile("sub_parse.perl","Parsing routines");
   AppendFile("sub_tokenise.perl","Tokenisation routines");

@@ -1,0 +1,39 @@
+################ TODO ################
+# +=important, -=medium, ?=maybe, H=help, D=documentation, W=web
++ Options to control default package inclusion.
++ Check on math macros, eg things like \left[.
++ Have %TC:floatinclude use existing rules if none is specified.
++ Allow non breaking space within numbers.
++ Add TC-option for setting sum weight, eg for new counters.
++ %TC:fileinclude accepts any name as file type.
++ Bug: Does not respect -includepackage when using -help-rule.
++ Bug: Nested subfolder file inclusion using -inc vs -merge.
++ Options should not allow partial group/math delimiters etc.
++ Add rule for \let. Problem with \let\X=Y format.
++ Missing: TC-command newcounter etc not handled in options file.
++ Implement %TC conversion rules to handle \begin{envir}.
++ Implement: count characters including spaces.
++ In -sum= option, use counter names (not 1,1,1 format).
+- Handle \startmacro...\endmacro more dynamically.
+- Add method for adding custom wordtypes.
+- Add macro *-option gobbling rules for various macros.
+- Ability to subcount macro/environment content.
+- CGI-version length/content checking/verification to prevent non-TeX code.
+? Korean should by default count words instead of characters.
+? Allow subfiles documentclass to automatically import the subfiles package?
+? Ability to choose macro rules depending on macro *-modifier.
+? Rule for macros defining new macros with specified rules.
+? Remove default option gobbling after end of macro.
+? Precompile static patterns (qr/.../).
+? Handle inserted separator better, e.g. in -v1.
+? Multiple CSS alternatives in cgi version.
+? Make executable (PAR::Packer)
+
+Packages to check:
+- citation packages (genericly)
+
+Bugs and issues for next version:
+- Accented characters limited to single letter macros as of now
+- ${\cup[}$ $]$  ---  parsed as \cup[...] --- %TC:macro \cup [nooption] 
+- Address TODOs: automatic modifiers (*) and option gobbling at end
+- Allow multilone options by default (only within macro parameter list)

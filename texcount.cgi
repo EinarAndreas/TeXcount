@@ -5,10 +5,12 @@ use Encode;
 use CGI ':standard';
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser set_message); 
 set_message('Please send information about this error to einarro@ifi.uio.no together with the text or file that caused it.');
+use Compress::Zlib;
+use Math::BigInt lib => 'GMP';
 
 ##### Version information
-my $versionnumber="3.2";
-my $versiondate="2020 Aug 04";
+my $versionnumber="3.2.0.54";
+my $versiondate="2025 Jul 21";
 
 
 
@@ -19,7 +21,7 @@ my %GLOBALDATA=
    ('versionnumber'  => $versionnumber
    ,'versiondate'    => $versiondate
    ,'maintainer'     => 'Einar Andreas Rodland'
-   ,'copyrightyears' => '2008-2020'
+   ,'copyrightyears' => '2008-2025'
    ,'website'        => 'https://app.uio.no/ifi/texcount/'
    );
 
@@ -114,17 +116,16 @@ $showsubcounts=1;
 $strictness=1;
 
 # CGI specific global variables
-my $LOGfilename='LOG/texcount.log'; # Log file
-my $MacroUsageLogFile='LOG/macrousage.log'; # Log file for macro usage
+my $EncryptedLogFile='LOG/texcount.enc'; # Encrypted log file
 
-# Unset log file if called from a test page
-if (my $ref=referer()) {
-  if ($ref=~/\/online_test\.\w+$/) {
-    $LOGfilename=undef;
-    $MacroUsageLogFile=undef;
-  }
-}
-
+# Log encryption parameters
+my $ECN = Int('0x1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7');
+my $ECC = [Int('0x100000C'), Int('0x1'), Int('0x0')];
+my $EC0 = [0];
+my $ECP = [Int('0x1A4A4D7569399A726305537A33F2093BBE7F'),
+           Int('0x2FD7EF49E4345D50B3E3DB9F8218683B900')];
+my $ECQ = [Int('0xC1543B5C76FD9A4F85899876FCAB801E180'),
+           Int('0xE2DE17838410F02B66C2ACEEE452F9C25B2')];
 
 
 ###### Set state identifiers and methods
@@ -466,16 +467,17 @@ my %STYLE_DESC=(
 
 # Patters matching a letter. Should be a single character or
 # ()-enclosed regex for substitution into word pattern regex.
-my @LetterMacros=qw/ae AE o O aa AA oe OE ss
+my @LetterMacros=qw/ae AE o O aa AA oe OE ss i j
    alpha beta gamma delta epsilon zeta eta theta iota kappa lamda
    mu nu xi pi rho sigma tau upsilon phi chi psi omega
    Gamma Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega 
    /;
 my $specialchars='\\\\('.join('|',@LetterMacros).')(\{\}|\s+|\b)';
-my $modifiedchars='\\\\[\'\"\`\~\^\=](@|\{@\})';
+my $modifiedchars='\\\\[\'\"\`\.\~\^\=\|](@|\{@\})';
+my $accentedchars='\\\\[bcCdfGhHkrtuUv]( @|\{@+\})';
 my %NamedLetterPattern;
 $NamedLetterPattern{'restricted'}='@';
-$NamedLetterPattern{'default'}='('.join('|','@',$modifiedchars,$specialchars,'[\.\,]\d').')';
+$NamedLetterPattern{'default'}='('.join('|','@',$modifiedchars,$accentedchars,$specialchars,'[\.\,]\d').')';
 $NamedLetterPattern{'relaxed'}=$NamedLetterPattern{'default'};
 my $LetterPattern=$NamedLetterPattern{'default'};
 
@@ -549,7 +551,7 @@ sub Is_punctuation { return <<END;
 +utf8::Punctuation
 -0024\t0025
 -005c
--007b\007e
+-007b\t007e
 END
 }
 
@@ -990,18 +992,26 @@ sub MAIN {
   if ($showcodes<0) {print_style_list();}
   if ($optionWordFreq || $optionWordClassFreq) {print_word_freq();}
   Close_Output();
-  if ( (defined $LOGfilename) && open(my $LOG,">>$LOGfilename") ) {
-    print $LOG join("\t",$versionnumber,scalar localtime,get_texsize($tex),$ENV{'REMOTE_ADDR'}),"\n";
-    close($LOG);
-  }
-  if ( (defined $MacroUsageLogFile) && (open my $LOG,">>$MacroUsageLogFile") ) {
-    print $LOG join("\t",$versionnumber,scalar localtime,get_texsize($tex),$ENV{'REMOTE_ADDR'});
+  Write_Log($tex);
+}
+
+# Write to encrypted log file
+sub Write_Log {
+  my $tex = shift @_;
+  if (!defined $EncryptedLogFile) {return;}
+  my $ip = $ENV{'REMOTE_ADDR'};
+  if ($ip =~ s/^((\d{1,3}\.){3})(\d{1,3})$/$1x/) {}
+  elsif ($ip =~ s/^(([\da-f]{0,4}:){4})(([\da-f]{0,4}:?){4})$/$1X/) {}
+  my @logdata = ($ip,$versionnumber,scalar localtime,get_texsize($tex));
+  if (GetParam('macrousagelog',0)) {
     foreach my $key (sort keys %MacroUsage) {
-      my $name=text_to_printable($key);
-      print $LOG "\t$key=$MacroUsage{$key}";
+      push @logdata,"$key=$MacroUsage{$key}";
     }
-    print $LOG "\n";
-    close($LOG);
+  }
+  my $enc = Encrypt(@logdata);
+  if (open my $LOG,">>$EncryptedLogFile") {
+    print $LOG "$enc\n";
+    close $LOG;
   }
 }
 
@@ -1043,7 +1053,6 @@ sub Set_Options {
   if ($optionWordFreq>0 || HasParam('wordfreq','0','stat')) {$optionWordClassFreq=1;}
   $showVersion=GetParam('showversion',$showVersion,'[01]');
   $includeBibliography=GetParam('incbib',0);
-  if (!GetParam('macrousagelog',0)) {$MacroUsageLogFile=undef;}
 }
 
 # Get CGI parameter, replace by default if lacking (or validates pattern)
@@ -1721,6 +1730,102 @@ sub get_texsize {
   return $tex->{'texlength'}
 }
 
+
+
+###### Encryption routines
+
+### Encryption routines
+
+sub Int {
+  my $x = shift @_;
+  return Math::BigInt->new($x);
+}
+
+sub RndInt {
+  my $N = shift @_;
+  my $m = Int(0);
+  my $RND = '.' x (length($N->as_hex()) >> 1);
+  if (open my $R, "<:raw", "/dev/urandom") {
+    read $R, $RND, length($RND);
+    close $R;
+    $RND =~ s/(.)/sprintf("%02X",ord($1))/egs;
+    $m = Int("0x".$RND);
+  } else {
+    while ($m < $N) {
+      $m = ($m<<32) + rand();
+    }
+  }
+  $m = $m % $N;
+  return $m;
+}
+
+sub ECCadd {
+  my ($P,$Q) = @_;
+  if ($P eq $EC0) {return $Q;}
+  if ($Q eq $EC0) {return $P;}
+  if ($P->[0] != $Q->[0]) {
+      my ($s, $t);
+      $s = ($P->[1])-($Q->[1]);
+      $t = (($P->[0])-($Q->[0]))->bmodinv($ECN);
+      $s = ($s*$t) % $ECN; # s = slope
+      my $x = (($s*$s)-($ECC->[0])-($P->[0])-($Q->[0])) % $ECN;
+      my $y = (-(($P->[1])+$s*($x-($P->[0])))) % $ECN;
+      return [$x,$y];
+  } elsif ($P->[1] eq $Q->[1]) {
+    return ECCdup($P);
+  } else {
+    return  $EC0;
+  }
+}
+
+sub ECCdup {
+  my $P = shift @_;
+  if ($P eq $EC0) {return $EC0;}
+  my ($x,$y) = @{$P};
+  if ($y eq 0) {return $EC0;}
+  my ($s, $t);
+  $s = (3*$x**2 + 2*($ECC->[0])*$x + ($ECC->[1])) % $ECN;
+  $t = (2*($P->[1]))->bmodinv($ECN);
+  $s = ($s*$t) % $ECN; # s = slope
+  my $xx = ($s*$s-($ECC->[0])-2*$x) % $ECN;
+  my $yy = (-($y+$s*($xx-$x))) % $ECN;
+  return [$xx,$yy];
+}
+
+sub ECCmul {
+  my ($P,$m) = @_;
+  my $Q = $EC0;
+  while ($m>0) {
+    if ($m%2 eq 1) {
+      $Q = ECCadd($Q,$P);
+    }
+    $m = $m>>1;
+    $P = ECCdup($P);
+  }
+  return $Q;
+}
+
+sub Encrypt {
+  #my $txt = encode('UTF-8',join(";",@_));
+  my $txt = compress(join(";",@_));
+  my $m = RndInt($ECN);
+  my $mP = ECCmul($ECP,$m);
+  my $mQ = ECCmul($ECQ,$m);
+  my @enc;
+  push @enc, $mP->[0]->as_hex(16),";";
+  my ($R,$r,$i,$b) = $EC0,0,0;
+  foreach (split(//,$txt)) {
+    if (--$i<=0) {
+      $R = ECCadd($R,$mQ);
+      $r = $R->[0];
+      $i = 8;
+    }
+    $b = $r & 0xFF;
+    $r = $r>>8;
+    push @enc,sprintf("%02x",ord($_)^$b);
+  }
+  return join('',@enc);
+}
 
 
 ###### Error handling

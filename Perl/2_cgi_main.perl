@@ -41,18 +41,26 @@ sub MAIN {
   if ($showcodes<0) {print_style_list();}
   if ($optionWordFreq || $optionWordClassFreq) {print_word_freq();}
   Close_Output();
-  if ( (defined $LOGfilename) && open(my $LOG,">>$LOGfilename") ) {
-    print $LOG join("\t",$versionnumber,scalar localtime,get_texsize($tex),$ENV{'REMOTE_ADDR'}),"\n";
-    close($LOG);
-  }
-  if ( (defined $MacroUsageLogFile) && (open my $LOG,">>$MacroUsageLogFile") ) {
-    print $LOG join("\t",$versionnumber,scalar localtime,get_texsize($tex),$ENV{'REMOTE_ADDR'});
+  Write_Log($tex);
+}
+
+# Write to encrypted log file
+sub Write_Log {
+  my $tex = shift @_;
+  if (!defined $EncryptedLogFile) {return;}
+  my $ip = $ENV{'REMOTE_ADDR'};
+  if ($ip =~ s/^((\d{1,3}\.){3})(\d{1,3})$/$1x/) {}
+  elsif ($ip =~ s/^(([\da-f]{0,4}:){4})(([\da-f]{0,4}:?){4})$/$1X/) {}
+  my @logdata = ($ip,$versionnumber,scalar localtime,get_texsize($tex));
+  if (GetParam('macrousagelog',0)) {
     foreach my $key (sort keys %MacroUsage) {
-      my $name=text_to_printable($key);
-      print $LOG "\t$key=$MacroUsage{$key}";
+      push @logdata,"$key=$MacroUsage{$key}";
     }
-    print $LOG "\n";
-    close($LOG);
+  }
+  my $enc = Encrypt(@logdata);
+  if (open my $LOG,">>$EncryptedLogFile") {
+    print $LOG "$enc\n";
+    close $LOG;
   }
 }
 
@@ -94,7 +102,6 @@ sub Set_Options {
   if ($optionWordFreq>0 || HasParam('wordfreq','0','stat')) {$optionWordClassFreq=1;}
   $showVersion=GetParam('showversion',$showVersion,'[01]');
   $includeBibliography=GetParam('incbib',0);
-  if (!GetParam('macrousagelog',0)) {$MacroUsageLogFile=undef;}
 }
 
 # Get CGI parameter, replace by default if lacking (or validates pattern)
